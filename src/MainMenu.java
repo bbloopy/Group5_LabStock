@@ -6,7 +6,7 @@ public class MainMenu {
 
     public static void main(String[] args) {
         System.out.println("Chemistry Equipment Borrowing System (Placeholder for login system)");
-        System.out.println("-------------------------------------");
+        System.out.println("--------------------------------------------------------------------");
         System.out.println("1. Lab Technician");
         System.out.println("2. Student");
         System.out.println("3. Exit");
