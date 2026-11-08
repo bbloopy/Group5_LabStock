@@ -1,22 +1,20 @@
-public class MyLinkedList<T> implements Iterable<T> {
+public class MyLinkedList<E> {
 
     private class Node {
-        T data;
+        E data;
         Node next;
 
-        Node(T data) {
+        Node(E data) {
             this.data = data;
             this.next = null;
         }
     }
 
     private Node head;
-    private Node tail;
     private int size;
 
     public MyLinkedList() {
         head = null;
-        tail = null;
         size = 0;
     }
 
@@ -28,36 +26,28 @@ public class MyLinkedList<T> implements Iterable<T> {
         return size;
     }
 
-    public void addFirst(T item) {
+    public void add(E item) {
         Node node = new Node(item);
-        node.next = head;
-        head = node;
-        if (tail == null) {
-            tail = node;
-        }
-        size++;
-    }
-
-    public void addLast(T item) {
-        Node node = new Node(item);
-        if (tail == null) {
+        if (head == null) {
             head = node;
-            tail = node;
         } else {
-            tail.next = node;
-            tail = node;
+            Node temp = head;
+            while (temp.next != null) {
+                temp = temp.next;
+            }
+            temp.next = node;
         }
         size++;
     }
 
-    public T get(int index) {
+    public E get(int index) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
         }
-        Node current = head;
+        Node temp = head;
         for (int i = 0; i < index; i++) {
-            current = current.next;
+            temp = temp.next;
         }
-        return current.data;
+        return temp.data;
     }
-
+}
