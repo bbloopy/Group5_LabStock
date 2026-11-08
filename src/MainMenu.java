@@ -4,6 +4,7 @@ public class MainMenu {
 
     private static Scanner scanner = new Scanner(System.in);
     private static TransactionHistory history = new TransactionHistory();
+    private static MyQueue<WaitingListEntry> waitingList = new MyQueue<>();
 
     public static void main(String[] args) {
         System.out.println("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
@@ -34,7 +35,9 @@ public class MainMenu {
             System.out.println("3. Search Item");
             System.out.println("4. View Overdue Items");
             System.out.println("5. View Transaction History");
-            System.out.println("6. Logout");
+            System.out.println("6. View Waiting List");
+            System.out.println("7. Serve Next in Waiting List");
+            System.out.println("8. Logout");
             System.out.print("Choose an option: ");
             int choice = Integer.parseInt(scanner.nextLine());
 
@@ -55,6 +58,12 @@ public class MainMenu {
                     showTransactionHistory();
                     break;
                 case 6:
+                    viewWaitingList();
+                    break;
+                case 7:
+                    serveNextInWaitingList();
+                    break;
+                case 8:
                     loggedIn = false;
                     System.out.println("Logging out.");
                     break;
@@ -75,7 +84,8 @@ public class MainMenu {
             System.out.println("1. Borrow Item");
             System.out.println("2. Return Item");
             System.out.println("3. View My Receipts");
-            System.out.println("4. Logout");
+            System.out.println("4. Join Waiting List");
+            System.out.println("5. Logout");
             System.out.print("Choose an option: ");
             int choice = Integer.parseInt(scanner.nextLine());
 
@@ -90,6 +100,9 @@ public class MainMenu {
                     viewMyReceipts(studentId);
                     break;
                 case 4:
+                    joinWaitingList(studentId);
+                    break;
+                case 5:
                     loggedIn = false;
                     System.out.println("Logging out.");
                     break;
@@ -98,6 +111,7 @@ public class MainMenu {
             }
         }
     }
+
     private static String promptStudentId() {
         while (true) {
             System.out.print("Enter your 8-digit Student ID: ");
@@ -149,6 +163,48 @@ public class MainMenu {
         }
         System.out.println("Total transactions: " + history.size());
     }
+
+    private static void joinWaitingList(String studentId) {
+        System.out.print("Enter item name: ");
+        String itemName = scanner.nextLine();
+        if (itemName.equals("")) {
+            System.out.println("Item name cannot be empty.");
+            return;
+        }
+
+        System.out.print("Enter quantity: ");
+        int quantity = Integer.parseInt(scanner.nextLine());
+        if (quantity <= 0) {
+            System.out.println("Quantity must be at least 1.");
+            return;
+        }
+
+        waitingList.enqueue(new WaitingListEntry(studentId, itemName, quantity));
+        System.out.println("Added to the waiting list. Your position: " + waitingList.size());
+    }
+
+    private static void viewWaitingList() {
+        System.out.println();
+        if (waitingList.isEmpty()) {
+            System.out.println("The waiting list is empty.");
+            return;
+        }
+        System.out.println("Waiting List (first come, first served):");
+        for (int i = 0; i < waitingList.size(); i++) {
+            System.out.println((i + 1) + ". " + waitingList.get(i));
+        }
+    }
+
+    private static void serveNextInWaitingList() {
+        System.out.println();
+        if (waitingList.isEmpty()) {
+            System.out.println("The waiting list is empty.");
+            return;
+        }
+        WaitingListEntry next = waitingList.dequeue();
+        System.out.println("Now serving: " + next);
+    }
+
     private static void showOverdueItems() {
         MyPriorityQueue<OverdueItem> overdueQueue = new MyPriorityQueue<>();
 
