@@ -3,6 +3,7 @@ import java.util.Scanner;
 public class MainMenu {
 
     private static Scanner scanner = new Scanner(System.in);
+    private static TransactionHistory history = new TransactionHistory();
 
     public static void main(String[] args) {
         System.out.println("Chemistry Equipment Borrowing System (Placeholder for login system)");
@@ -32,7 +33,8 @@ public class MainMenu {
             System.out.println("2. Remove Item");
             System.out.println("3. Search Item");
             System.out.println("4. View Overdue Items");
-            System.out.println("5. Logout");
+            System.out.println("5. View Transaction History");
+            System.out.println("6. Logout");
             System.out.print("Choose an option: ");
             int choice = Integer.parseInt(scanner.nextLine());
 
@@ -50,6 +52,9 @@ public class MainMenu {
                     showOverdueItems();
                     break;
                 case 5:
+                    showTransactionHistory();
+                    break;
+                case 6:
                     loggedIn = false;
                     System.out.println("Logging out.");
                     break;
@@ -60,10 +65,12 @@ public class MainMenu {
     }
 
     private static void studentMenu() {
+        String studentId = promptStudentId();
         boolean loggedIn = true;
 
         while (loggedIn) {
             System.out.println();
+            System.out.println("Student Menu (ID: " + studentId + ")");
             System.out.println("Student Menu");
             System.out.println("1. Borrow Item");
             System.out.println("2. Return Item");
@@ -74,13 +81,13 @@ public class MainMenu {
 
             switch (choice) {
                 case 1:
-                    System.out.println("Borrow Item feature coming soon.");
+                    processTransaction(studentId, "BORROW");
                     break;
                 case 2:
-                    System.out.println("Return Item feature coming soon.");
+                    processTransaction(studentId, "RETURN");
                     break;
                 case 3:
-                    System.out.println("View My Receipts feature coming soon.");
+                    viewMyReceipts(studentId);
                     break;
                 case 4:
                     loggedIn = false;
@@ -91,7 +98,57 @@ public class MainMenu {
             }
         }
     }
+    private static String promptStudentId() {
+        while (true) {
+            System.out.print("Enter your 8-digit Student ID: ");
+            String id = scanner.nextLine();
+            if (id.length() == 8) {
+                return id;
+            }
+            System.out.println("Invalid Student ID. Please enter exactly 8 digits.");
+        }
+    }
 
+    private static void processTransaction(String studentId, String type) {
+        System.out.print("Enter today's date (MM/DD/YYYY): ");
+        String date = scanner.nextLine();
+
+        System.out.print("Enter item name: ");
+        String itemName = scanner.nextLine();
+        if (itemName.equals("")) {
+            System.out.println("Item name cannot be empty.");
+            return;
+        }
+
+        System.out.print("Enter quantity: ");
+        int quantity = Integer.parseInt(scanner.nextLine());
+        if (quantity <= 0) {
+            System.out.println("Quantity must be at least 1.");
+            return;
+        }
+
+        Transaction t = history.record(studentId, itemName, quantity, type, date);
+        System.out.println();
+        System.out.println(ReceiptGenerator.generate(t));
+    }
+
+    private static void viewMyReceipts(String studentId) {
+        System.out.println();
+        System.out.println(ReceiptGenerator.generateStatement(studentId, history.getByStudent(studentId)));
+    }
+
+    private static void showTransactionHistory() {
+        System.out.println();
+        System.out.println("Transaction History (oldest first):");
+        if (history.isEmpty()) {
+            System.out.println("No transactions recorded yet.");
+            return;
+        }
+        for (int i = 0; i < history.size(); i++) {
+            System.out.println(history.getAll().get(i));
+        }
+        System.out.println("Total transactions: " + history.size());
+    }
     private static void showOverdueItems() {
         MyPriorityQueue<OverdueItem> overdueQueue = new MyPriorityQueue<>();
 
