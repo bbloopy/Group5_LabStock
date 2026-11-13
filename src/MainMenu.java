@@ -5,6 +5,19 @@ public class MainMenu {
     private static Scanner scanner = new Scanner(System.in);
     private static TransactionHistory history = new TransactionHistory();
     private static MyQueue<WaitingListEntry> waitingList = new MyQueue<>();
+    private static InventoryManager inventory = new InventoryManager();
+
+    private static String readLine() {
+        String input = scanner.nextLine();
+        clearScreen();
+        return input;
+    }
+
+    private static void clearScreen() {
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
+        }
+    }
 
     public static void main(String[] args) {
         System.out.println("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
@@ -13,7 +26,7 @@ public class MainMenu {
         System.out.println("2. Student");
         System.out.println("3. Exit");
         System.out.print("Select your role: ");
-        int roleChoice = Integer.parseInt(scanner.nextLine());
+        int roleChoice = Integer.parseInt(readLine());
 
         if (roleChoice == 1) {
             labTechnicianMenu();
@@ -37,19 +50,20 @@ public class MainMenu {
             System.out.println("5. View Transaction History");
             System.out.println("6. View Waiting List");
             System.out.println("7. Serve Next in Waiting List");
-            System.out.println("8. Logout");
+            System.out.println("8. Sort Inventory");
+            System.out.println("9. Logout");
             System.out.print("Choose an option: ");
-            int choice = Integer.parseInt(scanner.nextLine());
+            int choice = Integer.parseInt(readLine());
 
             switch (choice) {
                 case 1:
-                    System.out.println("Insert Item feature coming soon.");
+                    insertItem();
                     break;
                 case 2:
-                    System.out.println("Remove Item feature coming soon.");
+                    removeItem();
                     break;
                 case 3:
-                    System.out.println("Search Item feature coming soon.");
+                    searchItem();
                     break;
                 case 4:
                     showOverdueItems();
@@ -64,6 +78,9 @@ public class MainMenu {
                     serveNextInWaitingList();
                     break;
                 case 8:
+                    inventory.sortByCategory();
+                    break;
+                case 9:
                     loggedIn = false;
                     System.out.println("Logging out.");
                     break;
@@ -71,6 +88,86 @@ public class MainMenu {
                     System.out.println("Invalid option.");
             }
         }
+    }
+
+    private static void insertItem() {
+        System.out.print("Enter item name: ");
+        String itemName = readLine();
+        if (itemName.equals("")) {
+            System.out.println("Item name cannot be empty.");
+            return;
+        }
+
+        System.out.println("Select category:");
+        System.out.println("1. Glassware");
+        System.out.println("2. Measuring and Analytical Instruments");
+        System.out.println("3. Personal Protective Equipment (PPE)");
+        System.out.print("Choose a category: ");
+        int categoryChoice = Integer.parseInt(readLine());
+        String category = categoryFromChoice(categoryChoice);
+
+        System.out.print("Enter hazard label (toxic/flammable/fragile/none): ");
+        String hazardLabel = readLine();
+        if (hazardLabel.equals("")) {
+            hazardLabel = "none";
+        }
+
+        System.out.print("Enter quantity: ");
+        int quantity = Integer.parseInt(readLine());
+        if (quantity <= 0) {
+            System.out.println("Quantity must be at least 1.");
+            return;
+        }
+
+        InventoryItem item = inventory.insertItem(itemName, category, hazardLabel, quantity);
+        System.out.println("Saved. Current stock for " + item.getItemName() + ": " + item.getQuantity());
+    }
+
+    private static String categoryFromChoice(int choice) {
+        switch (choice) {
+            case 1:
+                return "Glassware";
+            case 2:
+                return "Measuring and Analytical Instruments";
+            case 3:
+                return "Personal Protective Equipment (PPE)";
+            default:
+                return "Uncategorized";
+        }
+    }
+
+    private static void removeItem() {
+        System.out.print("Enter item name: ");
+        String itemName = readLine();
+
+        InventoryItem item = inventory.searchItem(itemName);
+        if (item == null) {
+            System.out.println("Item not found in inventory.");
+            return;
+        }
+
+        System.out.print("Enter quantity to remove (current stock: " + item.getQuantity() + "): ");
+        int quantity = Integer.parseInt(readLine());
+        if (quantity <= 0) {
+            System.out.println("Quantity must be at least 1.");
+            return;
+        }
+
+        inventory.removeItem(itemName, quantity);
+        System.out.println("Removed " + quantity + " from " + itemName + ".");
+    }
+
+    private static void searchItem() {
+        System.out.print("Enter item name: ");
+        String itemName = readLine();
+
+        InventoryItem item = inventory.searchItem(itemName);
+        if (item == null) {
+            System.out.println("Item not found in inventory.");
+            return;
+        }
+
+        System.out.println(item);
     }
 
     private static void studentMenu() {
@@ -87,7 +184,7 @@ public class MainMenu {
             System.out.println("4. Join Waiting List");
             System.out.println("5. Logout");
             System.out.print("Choose an option: ");
-            int choice = Integer.parseInt(scanner.nextLine());
+            int choice = Integer.parseInt(readLine());
 
             switch (choice) {
                 case 1:
@@ -115,7 +212,7 @@ public class MainMenu {
     private static String promptStudentId() {
         while (true) {
             System.out.print("Enter your 8-digit Student ID: ");
-            String id = scanner.nextLine();
+            String id = readLine();
             if (id.length() == 8) {
                 return id;
             }
@@ -125,17 +222,17 @@ public class MainMenu {
 
     private static void processTransaction(String studentId, String type) {
         System.out.print("Enter today's date (MM/DD/YYYY): ");
-        String date = scanner.nextLine();
+        String date = readLine();
 
         System.out.print("Enter item name: ");
-        String itemName = scanner.nextLine();
+        String itemName = readLine();
         if (itemName.equals("")) {
             System.out.println("Item name cannot be empty.");
             return;
         }
 
         System.out.print("Enter quantity: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
             System.out.println("Quantity must be at least 1.");
             return;
@@ -166,14 +263,14 @@ public class MainMenu {
 
     private static void joinWaitingList(String studentId) {
         System.out.print("Enter item name: ");
-        String itemName = scanner.nextLine();
+        String itemName = readLine();
         if (itemName.equals("")) {
             System.out.println("Item name cannot be empty.");
             return;
         }
 
         System.out.print("Enter quantity: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
             System.out.println("Quantity must be at least 1.");
             return;
