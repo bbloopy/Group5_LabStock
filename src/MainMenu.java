@@ -19,13 +19,29 @@ public class MainMenu {
         }
     }
 
+    /** Centers the given text assuming a standard console width of 80 characters */
+    private static String centerText(String text) {
+        int padding = (80 - text.length()) / 2;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < padding; i++) {
+            sb.append(" ");
+        }
+        sb.append(text);
+        return sb.toString();
+    }
+
+    /** Centers a line of text and prints it */
+    private static void centerPrint(String text) {
+        System.out.println(centerText(text));
+    }
+
     public static void main(String[] args) {
-        System.out.println("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
-        System.out.println("--------------------------------------------------------------------");
-        System.out.println("1. Lab Technician");
-        System.out.println("2. Student");
-        System.out.println("3. Exit");
-        System.out.print("Select your role: ");
+        centerPrint("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
+        centerPrint("--------------------------------------------------------------------");
+        centerPrint("1. Lab Technician");
+        centerPrint("2. Student");
+        centerPrint("3. Exit");
+        System.out.print(centerText("Select your role: "));
         int roleChoice = Integer.parseInt(readLine());
 
         if (roleChoice == 1) {
@@ -33,7 +49,7 @@ public class MainMenu {
         } else if (roleChoice == 2) {
             studentMenu();
         } else {
-            System.out.println("Goodbye!");
+            centerPrint("Goodbye!");
         }
     }
 
@@ -41,18 +57,17 @@ public class MainMenu {
         boolean loggedIn = true;
 
         while (loggedIn) {
-            System.out.println();
-            System.out.println("Lab Technician Menu");
-            System.out.println("1. Insert Item");
-            System.out.println("2. Remove Item");
-            System.out.println("3. Search Item");
-            System.out.println("4. View Overdue Items");
-            System.out.println("5. View Transaction History");
-            System.out.println("6. View Waiting List");
-            System.out.println("7. Serve Next in Waiting List");
-            System.out.println("8. Sort Inventory");
-            System.out.println("9. Logout");
-            System.out.print("Choose an option: ");
+            centerPrint("Lab Technician Menu");
+            centerPrint("1. Insert Item");
+            centerPrint("2. Remove Item");
+            centerPrint("3. Search Item");
+            centerPrint("4. View Overdue Items");
+            centerPrint("5. View Transaction History");
+            centerPrint("6. View Waiting List");
+            centerPrint("7. Serve Next in Waiting List");
+            centerPrint("8. Sort Inventory");
+            centerPrint("9. Logout");
+            System.out.print(centerText("Choose an option: "));
             int choice = Integer.parseInt(readLine());
 
             switch (choice) {
@@ -99,9 +114,9 @@ public class MainMenu {
         }
 
         System.out.println("Select category:");
-        System.out.println("1. Glassware");
-        System.out.println("2. Measuring and Analytical Instruments");
-        System.out.println("3. Personal Protective Equipment (PPE)");
+        centerPrint("1. Glassware");
+        centerPrint("2. Measuring and Analytical Instruments");
+        centerPrint("3. Personal Protective Equipment (PPE)");
         System.out.print("Choose a category: ");
         int categoryChoice = Integer.parseInt(readLine());
         String category = categoryFromChoice(categoryChoice);
@@ -175,15 +190,14 @@ public class MainMenu {
         boolean loggedIn = true;
 
         while (loggedIn) {
-            System.out.println();
-            System.out.println("Student Menu (ID: " + studentId + ")");
-            System.out.println("Student Menu");
-            System.out.println("1. Borrow Item");
-            System.out.println("2. Return Item");
-            System.out.println("3. View My Receipts");
-            System.out.println("4. Join Waiting List");
-            System.out.println("5. Logout");
-            System.out.print("Choose an option: ");
+            centerPrint("Student Menu (ID: " + studentId + ")");
+            centerPrint("Student Menu");
+            centerPrint("1. Borrow Item");
+            centerPrint("2. Return Item");
+            centerPrint("3. View My Receipts");
+            centerPrint("4. Join Waiting List");
+            centerPrint("5. Logout");
+            System.out.print(centerText("Choose an option: "));
             int choice = Integer.parseInt(readLine());
 
             switch (choice) {
@@ -311,10 +325,9 @@ public class MainMenu {
         overdueQueue.insert(new OverdueItem("34567890", "Graduated Cylinder", 1, 1));
         overdueQueue.insert(new OverdueItem("45678901", "Safety Goggles", 3, 7));
 
-        System.out.println();
-        System.out.println("Overdue Items (most urgent first):");
+        centerPrint("Overdue Items (most urgent first):");
         while (!overdueQueue.isEmpty()) {
-            System.out.println(overdueQueue.extractMin());
+            centerPrint(overdueQueue.extractMin().toString());
         }
     }
 }
