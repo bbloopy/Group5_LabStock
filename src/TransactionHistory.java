@@ -11,6 +11,13 @@ public class TransactionHistory {
         return t;
     }
 
+    public void restore(Transaction t) {
+        transactions.add(t);
+        if (t.getTransactionId() >= nextId) {
+            nextId = t.getTransactionId() + 1;
+        }
+    }
+
     public int size() {
         return transactions.size();
     }
