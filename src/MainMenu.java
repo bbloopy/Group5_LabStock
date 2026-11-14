@@ -36,6 +36,9 @@ public class MainMenu {
     }
 
     public static void main(String[] args) {
+        DataStore.loadInventory(inventory);
+        DataStore.loadTransactions(history);
+        DataStore.loadWaitingList(waitingList);
         centerPrint("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
         centerPrint("--------------------------------------------------------------------");
         centerPrint("1. Lab Technician");
@@ -66,7 +69,8 @@ public class MainMenu {
             centerPrint("6. View Waiting List");
             centerPrint("7. Serve Next in Waiting List");
             centerPrint("8. Sort Inventory");
-            centerPrint("9. Logout");
+            centerPrint("9. View Student List");
+            centerPrint("10. Logout");
             System.out.print(centerText("Choose an option: "));
             int choice = Integer.parseInt(readLine());
 
@@ -96,6 +100,9 @@ public class MainMenu {
                     inventory.sortByCategory();
                     break;
                 case 9:
+                    showStudentList();
+                    break;
+                case 10:
                     loggedIn = false;
                     System.out.println("Logging out.");
                     break;
@@ -135,6 +142,7 @@ public class MainMenu {
         }
 
         InventoryItem item = inventory.insertItem(itemName, category, hazardLabel, quantity);
+        DataStore.saveInventory(inventory);
         System.out.println("Saved. Current stock for " + item.getItemName() + ": " + item.getQuantity());
     }
 
@@ -169,6 +177,7 @@ public class MainMenu {
         }
 
         inventory.removeItem(itemName, quantity);
+        DataStore.saveInventory(inventory);
         System.out.println("Removed " + quantity + " from " + itemName + ".");
     }
 
@@ -187,6 +196,7 @@ public class MainMenu {
 
     private static void studentMenu() {
         String studentId = promptStudentId();
+        DataStore.addStudent(studentId);
         boolean loggedIn = true;
 
         while (loggedIn) {
@@ -254,7 +264,10 @@ public class MainMenu {
 
         Transaction t = history.record(studentId, itemName, quantity, type, date);
         System.out.println();
-        System.out.println(ReceiptGenerator.generate(t));
+        String receipt = ReceiptGenerator.generate(t);
+        System.out.println(receipt);
+        DataStore.saveTransactions(history);
+        DataStore.appendReceipt(receipt);
     }
 
     private static void viewMyReceipts(String studentId) {
@@ -291,6 +304,7 @@ public class MainMenu {
         }
 
         waitingList.enqueue(new WaitingListEntry(studentId, itemName, quantity));
+        DataStore.saveWaitingList(waitingList);
         System.out.println("Added to the waiting list. Your position: " + waitingList.size());
     }
 
@@ -313,7 +327,22 @@ public class MainMenu {
             return;
         }
         WaitingListEntry next = waitingList.dequeue();
+        DataStore.saveWaitingList(waitingList);
         System.out.println("Now serving: " + next);
+    }
+
+    private static void showStudentList() {
+        System.out.println();
+        MyLinkedList<String> students = DataStore.getStudents();
+        if (students.isEmpty()) {
+            System.out.println("No students have logged in yet.");
+            return;
+        }
+        System.out.println("Registered Students:");
+        for (int i = 0; i < students.size(); i++) {
+            System.out.println((i + 1) + ". " + students.get(i));
+        }
+        System.out.println("Total students: " + students.size());
     }
 
     private static void showOverdueItems() {
