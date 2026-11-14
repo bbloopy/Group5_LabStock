@@ -2,6 +2,8 @@ import java.util.Scanner;
 
 public class MainMenu {
 
+    private static final int CONSOLE_WIDTH = 230;
+
     private static Scanner scanner = new Scanner(System.in);
     private static TransactionHistory history = new TransactionHistory();
     private static MyQueue<WaitingListEntry> waitingList = new MyQueue<>();
@@ -19,9 +21,8 @@ public class MainMenu {
         }
     }
 
-    /** Centers the given text assuming a standard console width of 80 characters */
     private static String centerText(String text) {
-        int padding = (80 - text.length()) / 2;
+        int padding = Math.max(0, (CONSOLE_WIDTH - text.length()) / 2);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < padding; i++) {
             sb.append(" ");
@@ -32,7 +33,37 @@ public class MainMenu {
 
     /** Centers a line of text and prints it */
     private static void centerPrint(String text) {
-        System.out.println(centerText(text));
+        String[] lines = text.split("\\R", -1);
+        for (int i = 0; i < lines.length; i++) {
+            System.out.println(centerText(lines[i]));
+        }
+    }
+
+    private static int blockMargin = 0;
+
+    private static void blockPrint(String... lines) {
+        int widest = 0;
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].length() > widest) {
+                widest = lines[i].length();
+            }
+        }
+        blockMargin = Math.max(0, (CONSOLE_WIDTH - widest) / 2);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < blockMargin; i++) {
+            sb.append(" ");
+        }
+        for (int i = 0; i < lines.length; i++) {
+            System.out.println(sb + lines[i]);
+        }
+    }
+
+    private static void blockPrompt(String prompt) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < blockMargin; i++) {
+            sb.append(" ");
+        }
+        System.out.print(sb + prompt);
     }
 
     public static void main(String[] args) {
@@ -41,10 +72,8 @@ public class MainMenu {
         DataStore.loadWaitingList(waitingList);
         centerPrint("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
         centerPrint("--------------------------------------------------------------------");
-        centerPrint("1. Lab Technician");
-        centerPrint("2. Student");
-        centerPrint("3. Exit");
-        System.out.print(centerText("Select your role: "));
+        blockPrint("1. Lab Technician", "2. Student", "3. Exit");
+        blockPrompt("Select your role: ");
         int roleChoice = Integer.parseInt(readLine());
 
         if (roleChoice == 1) {
@@ -75,17 +104,17 @@ public class MainMenu {
         while (loggedIn) {
             showInventorySummary();
             centerPrint("Lab Technician Menu");
-            centerPrint("1. Insert Item");
-            centerPrint("2. Remove Item");
-            centerPrint("3. Search Item");
-            centerPrint("4. View Overdue Items");
-            centerPrint("5. View Transaction History");
-            centerPrint("6. View Waiting List");
-            centerPrint("7. Serve Next in Waiting List");
-            centerPrint("8. Sort Inventory");
-            centerPrint("9. View Student List");
-            centerPrint("10. Logout");
-            System.out.print(centerText("Choose an option: "));
+            blockPrint("1. Insert Item",
+                    "2. Remove Item",
+                    "3. Search Item",
+                    "4. View Overdue Items",
+                    "5. View Transaction History",
+                    "6. View Waiting List",
+                    "7. Serve Next in Waiting List",
+                    "8. Sort Inventory",
+                    "9. View Student List",
+                    "10. Logout");
+            blockPrompt("Choose an option: ");
             int choice = Integer.parseInt(readLine());
 
             switch (choice) {
@@ -118,46 +147,46 @@ public class MainMenu {
                     break;
                 case 10:
                     loggedIn = false;
-                    System.out.println("Logging out.");
+                    centerPrint("Logging out.");
                     break;
                 default:
-                    System.out.println("Invalid option.");
+                    centerPrint("Invalid option.");
             }
         }
     }
 
     private static void insertItem() {
-        System.out.print("Enter item name: ");
+        System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
         if (itemName.equals("")) {
-            System.out.println("Item name cannot be empty.");
+            centerPrint("Item name cannot be empty.");
             return;
         }
 
-        System.out.println("Select category:");
-        centerPrint("1. Glassware");
-        centerPrint("2. Measuring and Analytical Instruments");
-        centerPrint("3. Personal Protective Equipment (PPE)");
-        System.out.print("Choose a category: ");
+        centerPrint("Select category:");
+        blockPrint("1. Glassware",
+                "2. Measuring and Analytical Instruments",
+                "3. Personal Protective Equipment (PPE)");
+        blockPrompt("Choose a category: ");
         int categoryChoice = Integer.parseInt(readLine());
         String category = categoryFromChoice(categoryChoice);
 
-        System.out.print("Enter hazard label (toxic/flammable/fragile/none): ");
+        System.out.print(centerText("Enter hazard label (toxic/flammable/fragile/none): "));
         String hazardLabel = readLine();
         if (hazardLabel.equals("")) {
             hazardLabel = "none";
         }
 
-        System.out.print("Enter quantity: ");
+        System.out.print(centerText("Enter quantity: "));
         int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
-            System.out.println("Quantity must be at least 1.");
+            centerPrint("Quantity must be at least 1.");
             return;
         }
 
         InventoryItem item = inventory.insertItem(itemName, category, hazardLabel, quantity);
         DataStore.saveInventory(inventory);
-        System.out.println("Saved. Current stock for " + item.getItemName() + ": " + item.getQuantity());
+        centerPrint("Saved. Current stock for " + item.getItemName() + ": " + item.getQuantity());
     }
 
     private static String categoryFromChoice(int choice) {
@@ -174,38 +203,38 @@ public class MainMenu {
     }
 
     private static void removeItem() {
-        System.out.print("Enter item name: ");
+        System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
 
         InventoryItem item = inventory.searchItem(itemName);
         if (item == null) {
-            System.out.println("Item not found in inventory.");
+            centerPrint("Item not found in inventory.");
             return;
         }
 
-        System.out.print("Enter quantity to remove (current stock: " + item.getQuantity() + "): ");
+        System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + "): "));
         int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
-            System.out.println("Quantity must be at least 1.");
+            centerPrint("Quantity must be at least 1.");
             return;
         }
 
         inventory.removeItem(itemName, quantity);
         DataStore.saveInventory(inventory);
-        System.out.println("Removed " + quantity + " from " + itemName + ".");
+        centerPrint("Removed " + quantity + " from " + itemName + ".");
     }
 
     private static void searchItem() {
-        System.out.print("Enter item name: ");
+        System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
 
         InventoryItem item = inventory.searchItem(itemName);
         if (item == null) {
-            System.out.println("Item not found in inventory.");
+            centerPrint("Item not found in inventory.");
             return;
         }
 
-        System.out.println(item);
+        centerPrint(item.toString());
     }
 
     private static void studentMenu() {
@@ -216,12 +245,12 @@ public class MainMenu {
         while (loggedIn) {
             centerPrint("Student Menu (ID: " + studentId + ")");
             centerPrint("Student Menu");
-            centerPrint("1. Borrow Item");
-            centerPrint("2. Return Item");
-            centerPrint("3. View My Receipts");
-            centerPrint("4. Join Waiting List");
-            centerPrint("5. Logout");
-            System.out.print(centerText("Choose an option: "));
+            blockPrint("1. Borrow Item",
+                    "2. Return Item",
+                    "3. View My Receipts",
+                    "4. Join Waiting List",
+                    "5. Logout");
+            blockPrompt("Choose an option: ");
             int choice = Integer.parseInt(readLine());
 
             switch (choice) {
@@ -240,124 +269,124 @@ public class MainMenu {
                     break;
                 case 5:
                     loggedIn = false;
-                    System.out.println("Logging out.");
+                    centerPrint("Logging out.");
                     break;
                 default:
-                    System.out.println("Invalid option.");
+                    centerPrint("Invalid option.");
             }
         }
     }
 
     private static String promptStudentId() {
         while (true) {
-            System.out.print("Enter your 8-digit Student ID: ");
+            System.out.print(centerText("Enter your 8-digit Student ID: "));
             String id = readLine();
             if (id.length() == 8) {
                 return id;
             }
-            System.out.println("Invalid Student ID. Please enter exactly 8 digits.");
+            centerPrint("Invalid Student ID. Please enter exactly 8 digits.");
         }
     }
 
     private static void processTransaction(String studentId, String type) {
-        System.out.print("Enter today's date (MM/DD/YYYY): ");
+        System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
         String date = readLine();
 
-        System.out.print("Enter item name: ");
+        System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
         if (itemName.equals("")) {
-            System.out.println("Item name cannot be empty.");
+            centerPrint("Item name cannot be empty.");
             return;
         }
 
-        System.out.print("Enter quantity: ");
+        System.out.print(centerText("Enter quantity: "));
         int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
-            System.out.println("Quantity must be at least 1.");
+            centerPrint("Quantity must be at least 1.");
             return;
         }
 
         Transaction t = history.record(studentId, itemName, quantity, type, date);
         System.out.println();
         String receipt = ReceiptGenerator.generate(t);
-        System.out.println(receipt);
+        centerPrint(receipt);
         DataStore.saveTransactions(history);
         DataStore.appendReceipt(receipt);
     }
 
     private static void viewMyReceipts(String studentId) {
         System.out.println();
-        System.out.println(ReceiptGenerator.generateStatement(studentId, history.getByStudent(studentId)));
+        centerPrint(ReceiptGenerator.generateStatement(studentId, history.getByStudent(studentId)));
     }
 
     private static void showTransactionHistory() {
         System.out.println();
-        System.out.println("Transaction History (oldest first):");
+        centerPrint("Transaction History (oldest first):");
         if (history.isEmpty()) {
-            System.out.println("No transactions recorded yet.");
+            centerPrint("No transactions recorded yet.");
             return;
         }
         for (int i = 0; i < history.size(); i++) {
-            System.out.println(history.getAll().get(i));
+            centerPrint(history.getAll().get(i).toString());
         }
-        System.out.println("Total transactions: " + history.size());
+        centerPrint("Total transactions: " + history.size());
     }
 
     private static void joinWaitingList(String studentId) {
-        System.out.print("Enter item name: ");
+        System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
         if (itemName.equals("")) {
-            System.out.println("Item name cannot be empty.");
+            centerPrint("Item name cannot be empty.");
             return;
         }
 
-        System.out.print("Enter quantity: ");
+        System.out.print(centerText("Enter quantity: "));
         int quantity = Integer.parseInt(readLine());
         if (quantity <= 0) {
-            System.out.println("Quantity must be at least 1.");
+            centerPrint("Quantity must be at least 1.");
             return;
         }
 
         waitingList.enqueue(new WaitingListEntry(studentId, itemName, quantity));
         DataStore.saveWaitingList(waitingList);
-        System.out.println("Added to the waiting list. Your position: " + waitingList.size());
+        centerPrint("Added to the waiting list. Your position: " + waitingList.size());
     }
 
     private static void viewWaitingList() {
         System.out.println();
         if (waitingList.isEmpty()) {
-            System.out.println("The waiting list is empty.");
+            centerPrint("The waiting list is empty.");
             return;
         }
-        System.out.println("Waiting List (first come, first served):");
+        centerPrint("Waiting List (first come, first served):");
         for (int i = 0; i < waitingList.size(); i++) {
-            System.out.println((i + 1) + ". " + waitingList.get(i));
+            centerPrint((i + 1) + ". " + waitingList.get(i));
         }
     }
 
     private static void serveNextInWaitingList() {
         System.out.println();
         if (waitingList.isEmpty()) {
-            System.out.println("The waiting list is empty.");
+            centerPrint("The waiting list is empty.");
             return;
         }
         WaitingListEntry next = waitingList.dequeue();
         DataStore.saveWaitingList(waitingList);
-        System.out.println("Now serving: " + next);
+        centerPrint("Now serving: " + next);
     }
 
     private static void showStudentList() {
         System.out.println();
         MyLinkedList<String> students = DataStore.getStudents();
         if (students.isEmpty()) {
-            System.out.println("No students have logged in yet.");
+            centerPrint("No students have logged in yet.");
             return;
         }
-        System.out.println("Registered Students:");
+        centerPrint("Registered Students:");
         for (int i = 0; i < students.size(); i++) {
-            System.out.println((i + 1) + ". " + students.get(i));
+            centerPrint((i + 1) + ". " + students.get(i));
         }
-        System.out.println("Total students: " + students.size());
+        centerPrint("Total students: " + students.size());
     }
 
     private static void showOverdueItems() {
