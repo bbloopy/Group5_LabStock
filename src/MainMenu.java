@@ -56,10 +56,24 @@ public class MainMenu {
         }
     }
 
+    private static void showInventorySummary() {
+        centerPrint("Current Inventory");
+        InventoryItem[] allItems = inventory.getAll();
+        if (allItems.length == 0) {
+            centerPrint("No items in inventory yet.");
+        } else {
+            for (int i = 0; i < allItems.length; i++) {
+                centerPrint((i + 1) + ". " + allItems[i]);
+            }
+        }
+        centerPrint("--------------------------------------------------------------------");
+    }
+
     private static void labTechnicianMenu() {
         boolean loggedIn = true;
 
         while (loggedIn) {
+            showInventorySummary();
             centerPrint("Lab Technician Menu");
             centerPrint("1. Insert Item");
             centerPrint("2. Remove Item");
@@ -212,6 +226,7 @@ public class MainMenu {
 
             switch (choice) {
                 case 1:
+                    showInventorySummary();
                     processTransaction(studentId, "BORROW");
                     break;
                 case 2:
