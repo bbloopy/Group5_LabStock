@@ -113,7 +113,8 @@ public class MainMenu {
                     "7. Serve Next in Waiting List",
                     "8. Sort Inventory",
                     "9. View Student List",
-                    "10. Logout");
+                    "10. Approve Transaction",
+                    "11. Logout");
             blockPrompt("Choose an option: ");
             int choice = Integer.parseInt(readLine());
 
@@ -140,12 +141,15 @@ public class MainMenu {
                     serveNextInWaitingList();
                     break;
                 case 8:
-                    inventory.sortByCategory();
+                    sortInventory();
                     break;
                 case 9:
                     showStudentList();
                     break;
                 case 10:
+                    approveTransaction();
+                    break;
+                case 11:
                     loggedIn = false;
                     centerPrint("Logging out.");
                     break;
@@ -239,6 +243,7 @@ public class MainMenu {
 
     private static void studentMenu() {
         String studentId = promptStudentId();
+        String studentName = promptStudentName();
         DataStore.addStudent(studentId);
         boolean loggedIn = true;
 
@@ -256,10 +261,10 @@ public class MainMenu {
             switch (choice) {
                 case 1:
                     showInventorySummary();
-                    processTransaction(studentId, "BORROW");
+                    processTransaction(studentId, studentName, "BORROW");
                     break;
                 case 2:
-                    processTransaction(studentId, "RETURN");
+                    processTransaction(studentId, studentName, "RETURN");
                     break;
                 case 3:
                     viewMyReceipts(studentId);
@@ -288,9 +293,23 @@ public class MainMenu {
         }
     }
 
-    private static void processTransaction(String studentId, String type) {
+    private static String promptStudentName() {
+        while (true) {
+            System.out.print(centerText("Enter your full name: "));
+            String name = readLine();
+            if (!name.equals("")) {
+                return name;
+            }
+            centerPrint("Name cannot be empty.");
+        }
+    }
+
+    private static void processTransaction(String studentId, String studentName, String type) {
         System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
         String date = readLine();
+
+        System.out.print(centerText("Enter time (HH:MM): "));
+        String time = readLine();
 
         System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
@@ -306,7 +325,26 @@ public class MainMenu {
             return;
         }
 
-        Transaction t = history.record(studentId, itemName, quantity, type, date);
+        if (type.equals("BORROW")) {
+            InventoryItem stock = inventory.searchItem(itemName);
+            if (stock == null) {
+                centerPrint("Item not found in inventory.");
+                return;
+            }
+            if (quantity > stock.getQuantity()) {
+                centerPrint("Not enough stock. Available: " + stock.getQuantity());
+                return;
+            }
+        }
+
+        System.out.print(centerText("Enter purpose: "));
+        String purpose = readLine();
+        if (purpose.equals("")) {
+            centerPrint("Purpose cannot be empty.");
+            return;
+        }
+
+        Transaction t = history.record(studentId, studentName, itemName, quantity, type, date, time, purpose);
         System.out.println();
         String receipt = ReceiptGenerator.generate(t);
         centerPrint(receipt);
@@ -373,6 +411,69 @@ public class MainMenu {
         WaitingListEntry next = waitingList.dequeue();
         DataStore.saveWaitingList(waitingList);
         centerPrint("Now serving: " + next);
+    }
+
+    private static void sortInventory() {
+        centerPrint("Sort inventory by:");
+        blockPrint("1. Name", "2. Category");
+        blockPrompt("Choose an option: ");
+        int choice = Integer.parseInt(readLine());
+
+        if (choice == 1) {
+            inventory.sortByName();
+        } else if (choice == 2) {
+            inventory.sortByCategory();
+        } else {
+            centerPrint("Invalid option.");
+            return;
+        }
+        DataStore.saveInventory(inventory);
+        centerPrint("Inventory sorted.");
+    }
+
+    private static void approveTransaction() {
+        centerPrint("Pending Transactions:");
+        int pending = 0;
+        for (int i = 0; i < history.size(); i++) {
+            Transaction t = history.getAll().get(i);
+            if (t.getStatus().equals("PENDING")) {
+                centerPrint(t.toString());
+                pending++;
+            }
+        }
+        if (pending == 0) {
+            centerPrint("No pending transactions.");
+            return;
+        }
+
+        System.out.print(centerText("Enter transaction number to approve: "));
+        int id = Integer.parseInt(readLine());
+        Transaction selected = history.findById(id);
+        if (selected == null) {
+            centerPrint("Transaction not found.");
+            return;
+        }
+        if (selected.getStatus().equals("APPROVED")) {
+            centerPrint("Transaction is already approved.");
+            return;
+        }
+
+        if (selected.getType().equals("BORROW")) {
+            if (!inventory.borrowItem(selected.getItemName(), selected.getQuantity())) {
+                centerPrint("Cannot approve: item not found or not enough stock.");
+                return;
+            }
+        } else {
+            if (!inventory.returnItem(selected.getItemName(), selected.getQuantity())) {
+                centerPrint("Cannot approve: item not found in inventory.");
+                return;
+            }
+        }
+        DataStore.saveInventory(inventory);
+
+        selected.setStatus("APPROVED");
+        DataStore.saveTransactions(history);
+        centerPrint("Transaction #" + id + " approved.");
     }
 
     private static void showStudentList() {
