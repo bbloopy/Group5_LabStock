@@ -85,24 +85,79 @@ public class MainMenu {
         }
     }
 
+    private static String truncate(String str, int maxLen) {
+        if (str.length() <= maxLen) {
+            return str;
+        }
+        return str.substring(0, maxLen - 3) + "...";
+    }
+
     private static void showInventorySummary() {
-        centerPrint("Current Inventory");
         InventoryItem[] allItems = inventory.getAll();
+        String border = "+------+-----------------------------------+---------------------------------------+--------------+----------+";
+        String header = String.format("| %-4s | %-33s | %-37s | %-12s | %-8s |", "No.", "Item Name", "Category", "Hazard", "Quantity");
+
+        centerPrint("CURRENT INVENTORY");
+        centerPrint(border);
+        centerPrint(header);
+        centerPrint(border);
+
         if (allItems.length == 0) {
-            centerPrint("No items in inventory yet.");
+            centerPrint(String.format("| %-104s |", "No items in inventory yet."));
         } else {
             for (int i = 0; i < allItems.length; i++) {
-                centerPrint((i + 1) + ". " + allItems[i]);
+                InventoryItem item = allItems[i];
+                String row = String.format("| %-4d | %-33s | %-37s | %-12s | %8d |",
+                        (i + 1),
+                        truncate(item.getItemName(), 33),
+                        truncate(item.getCategory(), 37),
+                        truncate(item.getHazardLabel(), 12),
+                        item.getQuantity());
+                centerPrint(row);
             }
         }
-        centerPrint("--------------------------------------------------------------------");
+        centerPrint(border);
+        System.out.println();
+    }
+
+    private static void showInventoryByCategory(String category) {
+        InventoryItem[] allItems = inventory.getAll();
+        String border = "+------+----------------------------------------+--------------+----------+";
+        String header = String.format("| %-4s | %-38s | %-12s | %-8s |", "No.", "Item Name", "Hazard", "Quantity");
+
+        centerPrint("CATEGORY: " + category.toUpperCase());
+        centerPrint(border);
+        centerPrint(header);
+        centerPrint(border);
+
+        boolean found = false;
+        int count = 1;
+
+        for (int i = 0; i < allItems.length; i++) {
+            if (allItems[i].getCategory().equals(category)) {
+                InventoryItem item = allItems[i];
+                String row = String.format("| %-4d | %-38s | %-12s | %8d |",
+                        count,
+                        truncate(item.getItemName(), 38),
+                        truncate(item.getHazardLabel(), 12),
+                        item.getQuantity());
+                centerPrint(row);
+                found = true;
+                count++;
+            }
+        }
+
+        if (!found) {
+            centerPrint(String.format("| %-71s |", "No items found in this category yet."));
+        }
+        centerPrint(border);
+        System.out.println();
     }
 
     private static void labTechnicianMenu() {
         boolean loggedIn = true;
 
         while (loggedIn) {
-            showInventorySummary();
             centerPrint("Lab Technician Menu");
             blockPrint("1. Insert Item",
                     "2. Remove Item",
@@ -160,20 +215,24 @@ public class MainMenu {
     }
 
     private static void insertItem() {
+        centerPrint("Select category:");
+        blockPrint("1. Glassware",
+                "2. Measuring and Analytical Instruments",
+                "3. Personal Protective Equipment (PPE)",
+                "4. Chemicals");
+        blockPrompt("Choose a category: ");
+        int categoryChoice = Integer.parseInt(readLine());
+        String category = categoryFromChoice(categoryChoice);
+
+        // Show the filtered inventory table for the selected category
+        showInventoryByCategory(category);
+
         System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
         if (itemName.equals("")) {
             centerPrint("Item name cannot be empty.");
             return;
         }
-
-        centerPrint("Select category:");
-        blockPrint("1. Glassware",
-                "2. Measuring and Analytical Instruments",
-                "3. Personal Protective Equipment (PPE)");
-        blockPrompt("Choose a category: ");
-        int categoryChoice = Integer.parseInt(readLine());
-        String category = categoryFromChoice(categoryChoice);
 
         System.out.print(centerText("Enter hazard label (toxic/flammable/fragile/none): "));
         String hazardLabel = readLine();
@@ -201,12 +260,26 @@ public class MainMenu {
                 return "Measuring and Analytical Instruments";
             case 3:
                 return "Personal Protective Equipment (PPE)";
+            case 4:
+                return "Chemicals";
             default:
-                return "Uncategorized";
+                return "Chemicals";
         }
     }
 
     private static void removeItem() {
+        centerPrint("Select category of the item to remove:");
+        blockPrint("1. Glassware",
+                "2. Measuring and Analytical Instruments",
+                "3. Personal Protective Equipment (PPE)",
+                "4. Chemicals");
+        blockPrompt("Choose a category: ");
+        int categoryChoice = Integer.parseInt(readLine());
+        String category = categoryFromChoice(categoryChoice);
+
+        // Show the filtered inventory table for the selected category
+        showInventoryByCategory(category);
+
         System.out.print(centerText("Enter item name: "));
         String itemName = readLine();
 
