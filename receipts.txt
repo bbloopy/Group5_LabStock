@@ -1,0 +1,78 @@
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000001
+Date        : 11/14/2026
+Student ID  : 12510092
+Type        : BORROW
+------------------------------------------
+Item        : Bunsen Burner
+Quantity    : 1
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000002
+Date        : 11/14/2026
+Student ID  : 12510092
+Type        : RETURN
+------------------------------------------
+Item        : Bunsen Burner
+Quantity    : 1
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000003
+Date        : 11/14/2026
+Student ID  : 12510092
+Type        : BORROW
+------------------------------------------
+Item        : Litmus Paper
+Quantity    : 5
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000004
+Date        : 11/14/2026
+Student ID  : 12510092
+Type        : RETURN
+------------------------------------------
+Item        : Litmus Paper
+Quantity    : 5
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000005
+Date        : 11/14/2026
+Student ID  : 12510092
+Type        : BORROW
+------------------------------------------
+Item        : Silver Nitrate
+Quantity    : 2
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000006
+Date        : Methanol
+Student ID  : 12510092
+Type        : BORROW
+------------------------------------------
+Item        : Methanol
+Quantity    : 5
+==========================================
+
