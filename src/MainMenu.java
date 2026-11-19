@@ -15,6 +15,10 @@ public class MainMenu {
         return input;
     }
 
+    private static String readLineNoClear() {
+        return scanner.nextLine();
+    }
+
     private static void clearScreen() {
         for (int i = 0; i < 50; i++) {
             System.out.println();
@@ -70,18 +74,50 @@ public class MainMenu {
         DataStore.loadInventory(inventory);
         DataStore.loadTransactions(history);
         DataStore.loadWaitingList(waitingList);
-        centerPrint("LabStock: Chemistry Equipment Borrowing System (Placeholder for login system)");
-        centerPrint("--------------------------------------------------------------------");
-        blockPrint("1. Lab Technician", "2. Student", "3. Exit");
-        blockPrompt("Select your role: ");
-        int roleChoice = Integer.parseInt(readLine());
 
-        if (roleChoice == 1) {
-            labTechnicianMenu();
-        } else if (roleChoice == 2) {
-            studentMenu();
-        } else {
-            centerPrint("Goodbye!");
+        while (true) {
+            centerPrint("LabStock: Chemistry Equipment Borrowing System");
+            centerPrint("--------------------------------------------------------------------");
+            blockPrint("1. Lab Technician", "2. Student", "3. Exit");
+            blockPrompt("Select your role: ");
+            int roleChoice = Integer.parseInt(readLine());
+
+            if (roleChoice == 1) {
+                if (authenticate("19910858", "SuperSuperPass", "Lab Technician")) {
+                    labTechnicianMenu();
+                }
+            } else if (roleChoice == 2) {
+                if (authenticate("12512353", "SuperPass", "Student")) {
+                    studentMenu("12512353");
+                }
+            } else if (roleChoice == 3) {
+                centerPrint("Goodbye!");
+                break;
+            } else {
+                centerPrint("Invalid option.");
+            }
+        }
+    }
+
+    private static boolean authenticate(String expectedId, String expectedPass, String roleName) {
+        while (true) {
+            centerPrint("=== " + roleName + " Login ===");
+            System.out.print(centerText("Enter ID (or type 'back' to return): "));
+            String id = readLineNoClear();
+            if (id.equalsIgnoreCase("back")) {
+                clearScreen();
+                return false;
+            }
+
+            System.out.print(centerText("Enter Password: "));
+            String pass = readLine();
+
+            if (id.equals(expectedId) && pass.equals(expectedPass)) {
+                centerPrint("Login successful! Welcome, " + roleName + ".");
+                return true;
+            } else {
+                centerPrint("Invalid ID or Password. Please try again.");
+            }
         }
     }
 
@@ -351,15 +387,13 @@ public class MainMenu {
         centerPrint(item.toString());
     }
 
-    private static void studentMenu() {
-        String studentId = promptStudentId();
+    private static void studentMenu(String studentId) {
         String studentName = promptStudentName();
         DataStore.addStudent(studentId);
         boolean loggedIn = true;
 
         while (loggedIn) {
             centerPrint("Student Menu (ID: " + studentId + ")");
-            centerPrint("Student Menu");
             blockPrint("1. Borrow Item",
                     "2. Return Item",
                     "3. View My Receipts",
@@ -400,17 +434,6 @@ public class MainMenu {
         }
     }
 
-    private static String promptStudentId() {
-        while (true) {
-            System.out.print(centerText("Enter your 8-digit Student ID: "));
-            String id = readLine();
-            if (id.length() == 8) {
-                return id;
-            }
-            centerPrint("Invalid Student ID. Please enter exactly 8 digits.");
-        }
-    }
-
     private static String promptStudentName() {
         while (true) {
             System.out.print(centerText("Enter your full name: "));
@@ -423,22 +446,18 @@ public class MainMenu {
     }
 
     private static void processTransaction(String studentId, String studentName, String type) {
-        System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
-        String date = readLine();
-
-        System.out.print(centerText("Enter time (HH:MM): "));
-        String time = readLine();
-
         System.out.print(centerText("Enter item name: "));
-        String itemName = readLine();
+        String itemName = readLineNoClear();
         if (itemName.equals("")) {
+            clearScreen();
             centerPrint("Item name cannot be empty.");
             return;
         }
 
         System.out.print(centerText("Enter quantity: "));
-        int quantity = Integer.parseInt(readLine());
+        int quantity = Integer.parseInt(readLineNoClear());
         if (quantity <= 0) {
+            clearScreen();
             centerPrint("Quantity must be at least 1.");
             return;
         }
@@ -446,14 +465,22 @@ public class MainMenu {
         if (type.equals("BORROW")) {
             InventoryItem stock = inventory.searchItem(itemName);
             if (stock == null) {
+                clearScreen();
                 centerPrint("Item not found in inventory.");
                 return;
             }
             if (quantity > stock.getQuantity()) {
+                clearScreen();
                 centerPrint("Not enough stock. Available: " + stock.getQuantity());
                 return;
             }
         }
+
+        System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
+        String date = readLineNoClear();
+
+        System.out.print(centerText("Enter time (HH:MM): "));
+        String time = readLineNoClear();
 
         System.out.print(centerText("Enter purpose: "));
         String purpose = readLine();
