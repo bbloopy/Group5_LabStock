@@ -53,6 +53,24 @@ public class InventoryManager {
         return true;
     }
 
+    public boolean borrowItem(String itemName, int quantity) {
+        InventoryItem item = searchItem(itemName);
+        if (item == null || quantity > item.getQuantity()) {
+            return false;
+        }
+        item.addQuantity(-quantity);
+        return true;
+    }
+
+    public boolean returnItem(String itemName, int quantity) {
+        InventoryItem item = searchItem(itemName);
+        if (item == null) {
+            return false;
+        }
+        item.addQuantity(quantity);
+        return true;
+    }
+
     public InventoryItem searchItem(String itemName) {
         Integer index = nameIndex.get(itemName);
         if (index == null) {
@@ -69,8 +87,39 @@ public class InventoryManager {
         return result;
     }
 
+    public void sortByName() {
+        sort(true);
+    }
+
     public void sortByCategory() {
-        System.out.println("Sort Inventory feature coming soon.");
+        sort(false);
+    }
+
+    private void sort(boolean byName) {
+        for (int i = 1; i < size; i++) {
+            InventoryItem key = items[i];
+            int j = i - 1;
+            while (j >= 0 && compareItems(items[j], key, byName) > 0) {
+                items[j + 1] = items[j];
+                j--;
+            }
+            items[j + 1] = key;
+        }
+
+        for (int i = 0; i < size; i++) {
+            nameIndex.put(items[i].getItemName(), i);
+        }
+    }
+
+    private int compareItems(InventoryItem a, InventoryItem b, boolean byName) {
+        if (byName) {
+            return a.getItemName().compareToIgnoreCase(b.getItemName());
+        }
+        int result = a.getCategory().compareToIgnoreCase(b.getCategory());
+        if (result == 0) {
+            result = a.getItemName().compareToIgnoreCase(b.getItemName());
+        }
+        return result;
     }
 
     private void removeAt(int index) {
