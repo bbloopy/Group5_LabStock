@@ -56,8 +56,9 @@ public class DataStore {
             for (int i = 0; i < all.size(); i++) {
                 Transaction t = all.get(i);
                 out.println(t.getTransactionId() + "|" + clean(t.getStudentId()) + "|"
-                        + clean(t.getItemName()) + "|" + t.getQuantity() + "|"
-                        + clean(t.getType()) + "|" + clean(t.getDate()));
+                        + clean(t.getStudentName()) + "|" + clean(t.getItemName()) + "|"
+                        + t.getQuantity() + "|" + clean(t.getType()) + "|" + clean(t.getDate()) + "|"
+                        + clean(t.getTime()) + "|" + clean(t.getPurpose()) + "|" + clean(t.getStatus()));
             }
             out.close();
         } catch (Exception e) {
@@ -74,9 +75,13 @@ public class DataStore {
             Scanner in = new Scanner(file);
             while (in.hasNextLine()) {
                 String[] p = in.nextLine().split("\\|");
-                if (p.length == 6) {
-                    history.restore(new Transaction(Integer.parseInt(p[0].trim()), p[1], p[2],
-                            Integer.parseInt(p[3].trim()), p[4], p[5]));
+                if (p.length == 9 || p.length == 10) {
+                    Transaction t = new Transaction(Integer.parseInt(p[0].trim()), p[1], p[2], p[3],
+                            Integer.parseInt(p[4].trim()), p[5], p[6], p[7], p[8]);
+                    if (p.length == 10) {
+                        t.setStatus(p[9]);
+                    }
+                    history.restore(t);
                 }
             }
             in.close();
