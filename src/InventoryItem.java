@@ -1,15 +1,29 @@
 public class InventoryItem {
 
+    private int itemId;
     private String itemName;
     private String category;
     private String hazardLabel;
     private int quantity;
 
-    public InventoryItem(String itemName, String category, String hazardLabel, int quantity) {
+    public InventoryItem(int itemId, String itemName, String category, String hazardLabel, int quantity) {
+        this.itemId = itemId;
         this.itemName = itemName;
         this.category = category;
         this.hazardLabel = hazardLabel;
         this.quantity = quantity;
+    }
+
+    public int getItemId() {
+        return itemId;
+    }
+
+    public String getFormattedId() {
+        String num = "" + itemId;
+        while (num.length() < 3) {
+            num = "0" + num;
+        }
+        return "ITM-" + num;
     }
 
     public String getItemName() {
@@ -35,6 +49,8 @@ public class InventoryItem {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append(getFormattedId());
+        sb.append(" | ");
         sb.append(itemName);
         sb.append(" | ");
         sb.append(category);

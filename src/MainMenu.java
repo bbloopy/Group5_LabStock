@@ -318,15 +318,36 @@ public class MainMenu {
     }
 
     private static void searchItem() {
-        System.out.print(centerText("Enter item name: "));
-        String itemName = readLine();
+        centerPrint("Search item by:");
+        blockPrint("1. Item Name", "2. Item ID");
+        blockPrompt("Choose an option: ");
+        int choice = Integer.parseInt(readLine());
 
-        InventoryItem item = inventory.searchItem(itemName);
+        InventoryItem item;
+        if (choice == 1) {
+            System.out.print(centerText("Enter item name: "));
+            item = inventory.searchItem(readLine());
+        } else if (choice == 2) {
+            System.out.print(centerText("Enter item ID (e.g. ITM-001 or 1): "));
+            String input = readLine().trim().toUpperCase();
+            if (input.startsWith("ITM-")) {
+                input = input.substring(4);
+            }
+            try {
+                item = inventory.searchItemById(Integer.parseInt(input));
+            } catch (NumberFormatException e) {
+                centerPrint("Invalid item ID.");
+                return;
+            }
+        } else {
+            centerPrint("Invalid option.");
+            return;
+        }
+
         if (item == null) {
             centerPrint("Item not found in inventory.");
             return;
         }
-
         centerPrint(item.toString());
     }
 

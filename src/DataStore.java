@@ -21,7 +21,7 @@ public class DataStore {
             InventoryItem[] all = inventory.getAll();
             for (int i = 0; i < all.length; i++) {
                 InventoryItem item = all[i];
-                out.println(clean(item.getItemName()) + "|" + clean(item.getCategory()) + "|"
+                out.println(item.getItemId() + "|" + clean(item.getItemName()) + "|" + clean(item.getCategory()) + "|"
                         + clean(item.getHazardLabel()) + "|" + item.getQuantity());
             }
             out.close();
@@ -39,7 +39,10 @@ public class DataStore {
             Scanner in = new Scanner(file);
             while (in.hasNextLine()) {
                 String[] p = in.nextLine().split("\\|");
-                if (p.length == 4) {
+                if (p.length == 5) {
+                    inventory.restoreItem(Integer.parseInt(p[0].trim()), p[1], p[2], p[3],
+                            Integer.parseInt(p[4].trim()));
+                } else if (p.length == 4) {
                     inventory.insertItem(p[0], p[1], p[2], Integer.parseInt(p[3].trim()));
                 }
             }

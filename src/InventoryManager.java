@@ -3,11 +3,15 @@ public class InventoryManager {
     private InventoryItem[] items;
     private int size;
     private MyHashTable<String, Integer> nameIndex;
+    private MyHashTable<Integer, InventoryItem> idIndex;
+    private int nextId;
 
     public InventoryManager() {
         items = new InventoryItem[10];
         size = 0;
         nameIndex = new MyHashTable<>();
+        idIndex = new MyHashTable<>();
+        nextId = 1;
     }
 
     public int size() {
@@ -31,11 +35,33 @@ public class InventoryManager {
             resize();
         }
 
-        InventoryItem newItem = new InventoryItem(itemName, category, hazardLabel, quantity);
+        InventoryItem newItem = new InventoryItem(nextId, itemName, category, hazardLabel, quantity);
+        nextId++;
         items[size] = newItem;
         nameIndex.put(itemName, size);
+        idIndex.put(newItem.getItemId(), newItem);
         size++;
         return newItem;
+    }
+
+    /** Used when loading from file so saved IDs are kept. */
+    public InventoryItem restoreItem(int itemId, String itemName, String category,
+                                     String hazardLabel, int quantity) {
+        if (nameIndex.get(itemName) != null || idIndex.get(itemId) != null) {
+            return insertItem(itemName, category, hazardLabel, quantity);
+        }
+        if (size == items.length) {
+            resize();
+        }
+        InventoryItem item = new InventoryItem(itemId, itemName, category, hazardLabel, quantity);
+        items[size] = item;
+        nameIndex.put(itemName, size);
+        idIndex.put(itemId, item);
+        size++;
+        if (itemId >= nextId) {
+            nextId = itemId + 1;
+        }
+        return item;
     }
 
     public boolean removeItem(String itemName, int quantity) {
@@ -77,6 +103,10 @@ public class InventoryManager {
             return null;
         }
         return items[index];
+    }
+
+    public InventoryItem searchItemById(int itemId) {
+        return idIndex.get(itemId);
     }
 
     public InventoryItem[] getAll() {
@@ -124,6 +154,7 @@ public class InventoryManager {
 
     private void removeAt(int index) {
         String removedName = items[index].getItemName();
+        idIndex.remove(items[index].getItemId());
         int lastIndex = size - 1;
 
         if (index != lastIndex) {
