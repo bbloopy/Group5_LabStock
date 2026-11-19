@@ -76,3 +76,37 @@ Item        : Methanol
 Quantity    : 5
 ==========================================
 
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000001
+Date        : 11/19/2026
+Time        : 02:37
+Student Name: Jeerho Laylo
+Student No. : 12510092
+Type        : BORROW
+Purpose     : experiments
+Status      : PENDING
+------------------------------------------
+Item        : Watch Glass 100mm
+Quantity    : 10
+==========================================
+
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000002
+Date        : 11/19/2026
+Time        : 02:40
+Student Name: Jeerho Laylo
+Student No. : 12510092
+Type        : BORROW
+Purpose     : Laboratory Experiments
+Status      : PENDING
+------------------------------------------
+Item        : Beaker 50mL
+Quantity    : 2
+==========================================
+

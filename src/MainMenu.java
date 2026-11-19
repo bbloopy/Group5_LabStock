@@ -2,7 +2,7 @@ import java.util.Scanner;
 
 public class MainMenu {
 
-    private static final int CONSOLE_WIDTH = 230;
+    private static final int CONSOLE_WIDTH = 120;
 
     private static Scanner scanner = new Scanner(System.in);
     private static TransactionHistory history = new TransactionHistory();
@@ -234,6 +234,22 @@ public class MainMenu {
             return;
         }
 
+        InventoryItem existing = inventory.searchItem(itemName);
+        if (existing != null) {
+            centerPrint("Item already exists (Category: " + existing.getCategory() + ", Hazard: " + existing.getHazardLabel() + ", Current Stock: " + existing.getQuantity() + ").");
+            System.out.print(centerText("Enter quantity to add: "));
+            int quantity = Integer.parseInt(readLine());
+            if (quantity <= 0) {
+                centerPrint("Quantity must be at least 1.");
+                return;
+            }
+
+            InventoryItem item = inventory.insertItem(existing.getItemName(), existing.getCategory(), existing.getHazardLabel(), quantity);
+            DataStore.saveInventory(inventory);
+            centerPrint("Saved. Current stock for " + item.getItemName() + ": " + item.getQuantity());
+            return;
+        }
+
         System.out.print(centerText("Enter hazard label (toxic/flammable/fragile/none): "));
         String hazardLabel = readLine();
         if (hazardLabel.equals("")) {
@@ -333,7 +349,15 @@ public class MainMenu {
 
             switch (choice) {
                 case 1:
-                    showInventorySummary();
+                    centerPrint("Select category to borrow from:");
+                    blockPrint("1. Glassware",
+                            "2. Measuring and Analytical Instruments",
+                            "3. Personal Protective Equipment (PPE)",
+                            "4. Chemicals");
+                    blockPrompt("Choose a category: ");
+                    int categoryChoice = Integer.parseInt(readLine());
+                    String category = categoryFromChoice(categoryChoice);
+                    showInventoryByCategory(category);
                     processTransaction(studentId, studentName, "BORROW");
                     break;
                 case 2:
