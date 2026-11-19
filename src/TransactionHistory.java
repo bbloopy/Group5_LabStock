@@ -3,9 +3,9 @@ public class TransactionHistory {
     private MyLinkedList<Transaction> transactions = new MyLinkedList<>();
     private int nextId = 1;
 
-    public Transaction record(String studentId, String itemName, int quantity,
-                              String type, String date) {
-        Transaction t = new Transaction(nextId, studentId, itemName, quantity, type, date);
+    public Transaction record(String studentId, String studentName, String itemName, int quantity,
+                              String type, String date, String time, String purpose) {
+        Transaction t = new Transaction(nextId, studentId, studentName, itemName, quantity, type, date, time, purpose);
         nextId++;
         transactions.add(t);
         return t;
@@ -56,9 +56,9 @@ public class TransactionHistory {
         TransactionHistory history = new TransactionHistory();
 
 
-        history.record("11111111", "Beaker 250mL", 2, "BORROW", "11/08/2026");
-        history.record("22222222", "Flask", 1, "BORROW", "11/08/2026");
-        history.record("11111111", "Beaker 250mL", 2, "RETURN", "11/09/2026");
+        history.record("11111111", "Ana Cruz", "Beaker 250mL", 2, "BORROW", "11/08/2026", "09:00", "Experiment 6");
+        history.record("22222222", "Ben Reyes", "Flask", 1, "BORROW", "11/08/2026", "10:30", "Experiment 6");
+        history.record("11111111", "Ana Cruz", "Beaker 250mL", 2, "RETURN", "11/09/2026", "14:00", "Experiment 6");
 
         System.out.println("=== All transactions ===");
         for (int i = 0; i < history.size(); i++) {

@@ -13,8 +13,12 @@ public class ReceiptGenerator {
         sb.append("==========================================").append("\n");
         sb.append("Receipt No. : R-").append(number).append("\n");
         sb.append("Date        : ").append(t.getDate()).append("\n");
-        sb.append("Student ID  : ").append(t.getStudentId()).append("\n");
+        sb.append("Time        : ").append(t.getTime()).append("\n");
+        sb.append("Student Name: ").append(t.getStudentName()).append("\n");
+        sb.append("Student No. : ").append(t.getStudentId()).append("\n");
         sb.append("Type        : ").append(t.getType()).append("\n");
+        sb.append("Purpose     : ").append(t.getPurpose()).append("\n");
+        sb.append("Status      : ").append(t.getStatus()).append("\n");
         sb.append("------------------------------------------").append("\n");
         sb.append("Item        : ").append(t.getItemName()).append("\n");
         sb.append("Quantity    : ").append(t.getQuantity()).append("\n");
