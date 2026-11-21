@@ -3,9 +3,9 @@ public class TransactionHistory {
     private MyLinkedList<Transaction> transactions = new MyLinkedList<>();
     private int nextId = 1;
 
-    public Transaction record(String studentId, String studentName, String itemName, int quantity,
+    public Transaction record(String studentId, String studentName, MyLinkedList<ReceiptLine> items,
                               String type, String date, String time, String purpose) {
-        Transaction t = new Transaction(nextId, studentId, studentName, itemName, quantity, type, date, time, purpose);
+        Transaction t = new Transaction(nextId, studentId, studentName, items, type, date, time, purpose);
         nextId++;
         transactions.add(t);
         return t;
@@ -41,6 +41,28 @@ public class TransactionHistory {
         return result;
     }
 
+    public MyLinkedList<Transaction> getPending() {
+        MyLinkedList<Transaction> result = new MyLinkedList<>();
+        for (int i = 0; i < transactions.size(); i++) {
+            Transaction t = transactions.get(i);
+            if (t.getStatus().equals("PENDING")) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
+    public MyLinkedList<Transaction> getPendingByStudent(String studentId) {
+        MyLinkedList<Transaction> result = new MyLinkedList<>();
+        for (int i = 0; i < transactions.size(); i++) {
+            Transaction t = transactions.get(i);
+            if (t.getStudentId().equals(studentId) && t.getStatus().equals("PENDING")) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
     public Transaction findById(int transactionId) {
         for (int i = 0; i < transactions.size(); i++) {
             Transaction t = transactions.get(i);
@@ -49,34 +71,5 @@ public class TransactionHistory {
             }
         }
         return null;
-    }
-
-    // Quick test
-    public static void main(String[] args) {
-        TransactionHistory history = new TransactionHistory();
-
-
-        history.record("11111111", "Ana Cruz", "Beaker 250mL", 2, "BORROW", "11/08/2026", "09:00", "Experiment 6");
-        history.record("22222222", "Ben Reyes", "Flask", 1, "BORROW", "11/08/2026", "10:30", "Experiment 6");
-        history.record("11111111", "Ana Cruz", "Beaker 250mL", 2, "RETURN", "11/09/2026", "14:00", "Experiment 6");
-
-        System.out.println("=== All transactions ===");
-        for (int i = 0; i < history.size(); i++) {
-            System.out.println(history.getAll().get(i));
-        }
-
-
-        System.out.println();
-        System.out.println("=== Checks (actual vs expected) ===");
-        System.out.println("Total transactions  : " + history.size() + " (expected 3)");
-        System.out.println("Student 11111111    : " + history.getByStudent("11111111").size() + " (expected 2)");
-        System.out.println("Student 22222222    : " + history.getByStudent("22222222").size() + " (expected 1)");
-        System.out.println("Student 99999999    : " + history.getByStudent("99999999").size() + " (expected 0)");
-        System.out.println("Transaction #2 item : " + history.findById(2).getItemName() + " (expected Flask)");
-        System.out.println("Transaction #99     : " + history.findById(99) + " (expected null)");
-
-        System.out.println();
-        System.out.println("=== Transaction #1 ===");
-        System.out.println(ReceiptGenerator.generate(history.findById(1)));
     }
 }

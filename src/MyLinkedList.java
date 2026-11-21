@@ -50,4 +50,24 @@ public class MyLinkedList<E> {
         }
         return temp.data;
     }
+
+    public E remove(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
+        }
+        if (index == 0) {
+            E data = head.data;
+            head = head.next;
+            size--;
+            return data;
+        }
+        Node prev = head;
+        for (int i = 0; i < index - 1; i++) {
+            prev = prev.next;
+        }
+        Node toRemove = prev.next;
+        prev.next = toRemove.next;
+        size--;
+        return toRemove.data;
+    }
 }

@@ -15,6 +15,39 @@ public class DataStore {
         return s.replace("|", "/");
     }
 
+    // Item names inside the encoded item list also can't contain ';' or ':',
+    // since those are the separators used for that list specifically.
+    private static String cleanItemName(String s) {
+        return clean(s).replace(";", ",").replace(":", "-");
+    }
+
+    private static String encodeItems(MyLinkedList<ReceiptLine> items) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) {
+                sb.append(";");
+            }
+            ReceiptLine line = items.get(i);
+            sb.append(cleanItemName(line.getItemName())).append(":").append(line.getQuantity());
+        }
+        return sb.toString();
+    }
+
+    private static MyLinkedList<ReceiptLine> decodeItems(String encoded) {
+        MyLinkedList<ReceiptLine> items = new MyLinkedList<>();
+        if (encoded.equals("")) {
+            return items;
+        }
+        String[] parts = encoded.split(";");
+        for (int i = 0; i < parts.length; i++) {
+            String[] kv = parts[i].split(":");
+            if (kv.length == 2) {
+                items.add(new ReceiptLine(kv[0], Integer.parseInt(kv[1].trim())));
+            }
+        }
+        return items;
+    }
+
     public static void saveInventory(InventoryManager inventory) {
         try {
             PrintWriter out = new PrintWriter(new FileWriter(INVENTORY_FILE));
@@ -59,8 +92,8 @@ public class DataStore {
             for (int i = 0; i < all.size(); i++) {
                 Transaction t = all.get(i);
                 out.println(t.getTransactionId() + "|" + clean(t.getStudentId()) + "|"
-                        + clean(t.getStudentName()) + "|" + clean(t.getItemName()) + "|"
-                        + t.getQuantity() + "|" + clean(t.getType()) + "|" + clean(t.getDate()) + "|"
+                        + clean(t.getStudentName()) + "|" + encodeItems(t.getItems()) + "|"
+                        + clean(t.getType()) + "|" + clean(t.getDate()) + "|"
                         + clean(t.getTime()) + "|" + clean(t.getPurpose()) + "|" + clean(t.getStatus()));
             }
             out.close();
@@ -77,13 +110,11 @@ public class DataStore {
         try {
             Scanner in = new Scanner(file);
             while (in.hasNextLine()) {
-                String[] p = in.nextLine().split("\\|");
-                if (p.length == 9 || p.length == 10) {
-                    Transaction t = new Transaction(Integer.parseInt(p[0].trim()), p[1], p[2], p[3],
-                            Integer.parseInt(p[4].trim()), p[5], p[6], p[7], p[8]);
-                    if (p.length == 10) {
-                        t.setStatus(p[9]);
-                    }
+                String[] p = in.nextLine().split("\\|", -1);
+                if (p.length == 9) {
+                    Transaction t = new Transaction(Integer.parseInt(p[0].trim()), p[1], p[2], decodeItems(p[3]),
+                            p[4], p[5], p[6], p[7]);
+                    t.setStatus(p[8]);
                     history.restore(t);
                 }
             }

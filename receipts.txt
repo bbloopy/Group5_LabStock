@@ -110,3 +110,21 @@ Item        : Beaker 50mL
 Quantity    : 2
 ==========================================
 
+==========================================
+   CHEMISTRY EQUIPMENT BORROWING SYSTEM
+              OFFICIAL RECEIPT
+==========================================
+Receipt No. : R-000001
+Date        : 11/21/2026
+Time        : 19:14
+Student Name: Jeerho Laylo
+Student No. : 12512353
+Type        : BORROW
+Purpose     : Lab Experiments
+Status      : APPROVED
+------------------------------------------
+Items:
+  1. Glass Funnel 75mm x10
+  2. Beaker 50mL x2
+==========================================
+

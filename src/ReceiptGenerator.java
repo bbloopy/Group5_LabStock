@@ -1,10 +1,15 @@
 public class ReceiptGenerator {
-    public static String generate(Transaction t) {
 
-        String number = "" + t.getTransactionId();
+    public static String formatReceiptNumber(int transactionId) {
+        String number = "" + transactionId;
         while (number.length() < 6) {
             number = "0" + number;
         }
+        return number;
+    }
+
+    public static String generate(Transaction t) {
+        String number = formatReceiptNumber(t.getTransactionId());
 
         StringBuilder sb = new StringBuilder();
         sb.append("==========================================").append("\n");
@@ -20,8 +25,13 @@ public class ReceiptGenerator {
         sb.append("Purpose     : ").append(t.getPurpose()).append("\n");
         sb.append("Status      : ").append(t.getStatus()).append("\n");
         sb.append("------------------------------------------").append("\n");
-        sb.append("Item        : ").append(t.getItemName()).append("\n");
-        sb.append("Quantity    : ").append(t.getQuantity()).append("\n");
+        sb.append("Items:\n");
+        MyLinkedList<ReceiptLine> items = t.getItems();
+        for (int i = 0; i < items.size(); i++) {
+            ReceiptLine line = items.get(i);
+            sb.append("  ").append(i + 1).append(". ").append(line.getItemName())
+                    .append(" x").append(line.getQuantity()).append("\n");
+        }
         sb.append("==========================================");
         return sb.toString();
     }

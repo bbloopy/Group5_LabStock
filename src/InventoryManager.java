@@ -3,15 +3,15 @@ public class InventoryManager {
     private InventoryItem[] items;
     private int size;
     private MyHashTable<String, Integer> nameIndex;
-    private MyHashTable<Integer, InventoryItem> idIndex;
-    private int nextId;
+    private MyHashTable<Integer, Integer> idIndex;
+    private int nextItemId;
 
     public InventoryManager() {
         items = new InventoryItem[10];
         size = 0;
         nameIndex = new MyHashTable<>();
         idIndex = new MyHashTable<>();
-        nextId = 1;
+        nextItemId = 1;
     }
 
     public int size() {
@@ -35,33 +35,29 @@ public class InventoryManager {
             resize();
         }
 
-        InventoryItem newItem = new InventoryItem(nextId, itemName, category, hazardLabel, quantity);
-        nextId++;
+        InventoryItem newItem = new InventoryItem(nextItemId, itemName, category, hazardLabel, quantity);
+        nextItemId++;
         items[size] = newItem;
         nameIndex.put(itemName, size);
-        idIndex.put(newItem.getItemId(), newItem);
+        idIndex.put(newItem.getItemId(), size);
         size++;
         return newItem;
     }
 
-    /** Used when loading from file so saved IDs are kept. */
-    public InventoryItem restoreItem(int itemId, String itemName, String category,
-                                     String hazardLabel, int quantity) {
-        if (nameIndex.get(itemName) != null || idIndex.get(itemId) != null) {
-            return insertItem(itemName, category, hazardLabel, quantity);
-        }
+    public void restoreItem(int itemId, String itemName, String category, String hazardLabel, int quantity) {
         if (size == items.length) {
             resize();
         }
+
         InventoryItem item = new InventoryItem(itemId, itemName, category, hazardLabel, quantity);
         items[size] = item;
         nameIndex.put(itemName, size);
-        idIndex.put(itemId, item);
+        idIndex.put(itemId, size);
         size++;
-        if (itemId >= nextId) {
-            nextId = itemId + 1;
+
+        if (itemId >= nextItemId) {
+            nextItemId = itemId + 1;
         }
-        return item;
     }
 
     public boolean removeItem(String itemName, int quantity) {
@@ -81,10 +77,10 @@ public class InventoryManager {
 
     public boolean borrowItem(String itemName, int quantity) {
         InventoryItem item = searchItem(itemName);
-        if (item == null || quantity > item.getQuantity()) {
+        if (item == null || item.getQuantity() < quantity) {
             return false;
         }
-        item.addQuantity(-quantity);
+        removeItem(itemName, quantity);
         return true;
     }
 
@@ -106,7 +102,11 @@ public class InventoryManager {
     }
 
     public InventoryItem searchItemById(int itemId) {
-        return idIndex.get(itemId);
+        Integer index = idIndex.get(itemId);
+        if (index == null) {
+            return null;
+        }
+        return items[index];
     }
 
     public InventoryItem[] getAll() {
@@ -117,55 +117,55 @@ public class InventoryManager {
         return result;
     }
 
-    public void sortByName() {
-        sort(true);
-    }
-
     public void sortByCategory() {
-        sort(false);
-    }
-
-    private void sort(boolean byName) {
         for (int i = 1; i < size; i++) {
             InventoryItem key = items[i];
             int j = i - 1;
-            while (j >= 0 && compareItems(items[j], key, byName) > 0) {
+            while (j >= 0 && items[j].getCategory().compareTo(key.getCategory()) > 0) {
                 items[j + 1] = items[j];
                 j--;
             }
             items[j + 1] = key;
         }
-
-        for (int i = 0; i < size; i++) {
-            nameIndex.put(items[i].getItemName(), i);
-        }
+        rebuildIndex();
     }
 
-    private int compareItems(InventoryItem a, InventoryItem b, boolean byName) {
-        if (byName) {
-            return a.getItemName().compareToIgnoreCase(b.getItemName());
+    public void sortByName() {
+        for (int i = 1; i < size; i++) {
+            InventoryItem key = items[i];
+            int j = i - 1;
+            while (j >= 0 && items[j].getItemName().compareTo(key.getItemName()) > 0) {
+                items[j + 1] = items[j];
+                j--;
+            }
+            items[j + 1] = key;
         }
-        int result = a.getCategory().compareToIgnoreCase(b.getCategory());
-        if (result == 0) {
-            result = a.getItemName().compareToIgnoreCase(b.getItemName());
+        rebuildIndex();
+    }
+
+    private void rebuildIndex() {
+        for (int i = 0; i < size; i++) {
+            nameIndex.put(items[i].getItemName(), i);
+            idIndex.put(items[i].getItemId(), i);
         }
-        return result;
     }
 
     private void removeAt(int index) {
         String removedName = items[index].getItemName();
-        idIndex.remove(items[index].getItemId());
+        int removedId = items[index].getItemId();
         int lastIndex = size - 1;
 
         if (index != lastIndex) {
             InventoryItem lastItem = items[lastIndex];
             items[index] = lastItem;
             nameIndex.put(lastItem.getItemName(), index);
+            idIndex.put(lastItem.getItemId(), index);
         }
 
         items[lastIndex] = null;
         size--;
         nameIndex.remove(removedName);
+        idIndex.remove(removedId);
     }
 
     private void resize() {

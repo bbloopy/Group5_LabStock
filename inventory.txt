@@ -1,52 +1,52 @@
-Beaker 50mL|Glassware|fragile|98
-Beaker 100mL|Glassware|fragile|60
-Beaker 250mL|Glassware|fragile|40
-Beaker 500mL|Glassware|fragile|30
-Beaker 1000mL|Glassware|fragile|15
-Erlenmeyer Flask 125mL|Glassware|fragile|45
-Erlenmeyer Flask 250mL|Glassware|fragile|40
-Erlenmeyer Flask 500mL|Glassware|fragile|25
-Volumetric Flask 100mL|Glassware|fragile|20
-Volumetric Flask 250mL|Glassware|fragile|20
-Test Tube 15x150mm|Glassware|fragile|200
-Watch Glass 100mm|Glassware|fragile|40
-Stirring Rod 250mm|Glassware|fragile|100
-Glass Funnel 75mm|Glassware|fragile|30
-Graduated Cylinder 10mL|Measuring and Analytical Instruments|fragile|40
-Graduated Cylinder 50mL|Measuring and Analytical Instruments|fragile|35
-Graduated Cylinder 100mL|Measuring and Analytical Instruments|fragile|30
-Volumetric Pipette 10mL|Measuring and Analytical Instruments|fragile|25
-Burette 50mL|Measuring and Analytical Instruments|fragile|20
-Analytical Balance (0.1mg)|Measuring and Analytical Instruments|none|5
-Top-loading Balance (0.01g)|Measuring and Analytical Instruments|none|10
-Digital Thermometer|Measuring and Analytical Instruments|none|30
-Alcohol Thermometer|Measuring and Analytical Instruments|fragile|40
-pH Meter|Measuring and Analytical Instruments|none|8
-Bunsen Burner|Measuring and Analytical Instruments|none|25
-Hot Plate with Magnetic Stirrer|Measuring and Analytical Instruments|none|15
-Crucible with Lid|Measuring and Analytical Instruments|fragile|40
-Safety Goggles (Standard)|Personal Protective Equipment (PPE)|none|100
-Splash Goggles|Personal Protective Equipment (PPE)|none|50
-Lab Coat (Small)|Personal Protective Equipment (PPE)|none|20
-Lab Coat (Medium)|Personal Protective Equipment (PPE)|none|40
-Lab Coat (Large)|Personal Protective Equipment (PPE)|none|30
-Nitrile Gloves (Small, Box)|Personal Protective Equipment (PPE)|none|15
-Nitrile Gloves (Medium, Box)|Personal Protective Equipment (PPE)|none|25
-Nitrile Gloves (Large, Box)|Personal Protective Equipment (PPE)|none|20
-Heat-Resistant Gloves (Pair)|Personal Protective Equipment (PPE)|none|10
-Chemical Splash Apron|Personal Protective Equipment (PPE)|none|20
-Face Shield|Personal Protective Equipment (PPE)|none|12
-Hydrochloric Acid 1M (500mL)|Chemicals|toxic|20
-Sulfuric Acid 1M (500mL)|Chemicals|toxic|15
-Nitric Acid 0.5M (500mL)|Chemicals|toxic|10
-Sodium Hydroxide Pellets (500g)|Chemicals|toxic|25
-Ethanol 95% (1000mL)|Chemicals|flammable|30
-Acetone (1000mL)|Chemicals|flammable|20
-Isopropyl Alcohol 70% (1000mL)|Chemicals|flammable|25
-Sodium Chloride (1000g)|Chemicals|none|50
-Calcium Carbonate Powder (500g)|Chemicals|none|40
-Copper(II) Sulfate Pentahydrate (250g)|Chemicals|toxic|15
-Potassium Permanganate (100g)|Chemicals|toxic|10
-Iodine Crystals (50g)|Chemicals|toxic|5
-Magnesium Ribbon (25g)|Chemicals|flammable|20
-Distilled Water (1000mL)|Chemicals|none|100
+1|Beaker 50mL|Glassware|fragile|96
+2|Beaker 100mL|Glassware|fragile|60
+3|Beaker 250mL|Glassware|fragile|40
+4|Beaker 500mL|Glassware|fragile|30
+5|Beaker 1000mL|Glassware|fragile|15
+6|Erlenmeyer Flask 125mL|Glassware|fragile|45
+7|Erlenmeyer Flask 250mL|Glassware|fragile|40
+8|Erlenmeyer Flask 500mL|Glassware|fragile|25
+9|Volumetric Flask 100mL|Glassware|fragile|20
+10|Volumetric Flask 250mL|Glassware|fragile|20
+11|Test Tube 15x150mm|Glassware|fragile|200
+12|Watch Glass 100mm|Glassware|fragile|40
+13|Stirring Rod 250mm|Glassware|fragile|100
+14|Glass Funnel 75mm|Glassware|fragile|20
+15|Graduated Cylinder 10mL|Measuring and Analytical Instruments|fragile|40
+16|Graduated Cylinder 50mL|Measuring and Analytical Instruments|fragile|35
+17|Graduated Cylinder 100mL|Measuring and Analytical Instruments|fragile|30
+18|Volumetric Pipette 10mL|Measuring and Analytical Instruments|fragile|25
+19|Burette 50mL|Measuring and Analytical Instruments|fragile|20
+20|Analytical Balance (0.1mg)|Measuring and Analytical Instruments|none|5
+21|Top-loading Balance (0.01g)|Measuring and Analytical Instruments|none|10
+22|Digital Thermometer|Measuring and Analytical Instruments|none|30
+23|Alcohol Thermometer|Measuring and Analytical Instruments|fragile|40
+24|pH Meter|Measuring and Analytical Instruments|none|8
+25|Bunsen Burner|Measuring and Analytical Instruments|none|25
+26|Hot Plate with Magnetic Stirrer|Measuring and Analytical Instruments|none|15
+27|Crucible with Lid|Measuring and Analytical Instruments|fragile|40
+28|Safety Goggles (Standard)|Personal Protective Equipment (PPE)|none|100
+29|Splash Goggles|Personal Protective Equipment (PPE)|none|50
+30|Lab Coat (Small)|Personal Protective Equipment (PPE)|none|20
+31|Lab Coat (Medium)|Personal Protective Equipment (PPE)|none|40
+32|Lab Coat (Large)|Personal Protective Equipment (PPE)|none|30
+33|Nitrile Gloves (Small, Box)|Personal Protective Equipment (PPE)|none|15
+34|Nitrile Gloves (Medium, Box)|Personal Protective Equipment (PPE)|none|25
+35|Nitrile Gloves (Large, Box)|Personal Protective Equipment (PPE)|none|20
+36|Heat-Resistant Gloves (Pair)|Personal Protective Equipment (PPE)|none|10
+37|Chemical Splash Apron|Personal Protective Equipment (PPE)|none|20
+38|Face Shield|Personal Protective Equipment (PPE)|none|12
+39|Hydrochloric Acid 1M (500mL)|Chemicals|toxic|25
+40|Sulfuric Acid 1M (500mL)|Chemicals|toxic|15
+41|Nitric Acid 0.5M (500mL)|Chemicals|toxic|10
+42|Sodium Hydroxide Pellets (500g)|Chemicals|toxic|25
+43|Ethanol 95% (1000mL)|Chemicals|flammable|30
+44|Acetone (1000mL)|Chemicals|flammable|20
+45|Isopropyl Alcohol 70% (1000mL)|Chemicals|flammable|25
+46|Sodium Chloride (1000g)|Chemicals|none|50
+47|Calcium Carbonate Powder (500g)|Chemicals|none|40
+48|Copper(II) Sulfate Pentahydrate (250g)|Chemicals|toxic|15
+49|Potassium Permanganate (100g)|Chemicals|toxic|10
+50|Iodine Crystals (50g)|Chemicals|toxic|5
+51|Magnesium Ribbon (25g)|Chemicals|flammable|20
+52|Distilled Water (1000mL)|Chemicals|none|100

@@ -398,7 +398,8 @@ public class MainMenu {
                     "2. Return Item",
                     "3. View My Receipts",
                     "4. Join Waiting List",
-                    "5. Logout");
+                    "5. Edit Pending Receipt",
+                    "6. Logout");
             blockPrompt("Choose an option: ");
             int choice = Integer.parseInt(readLine());
 
@@ -425,6 +426,9 @@ public class MainMenu {
                     joinWaitingList(studentId);
                     break;
                 case 5:
+                    editPendingReceipt(studentId);
+                    break;
+                case 6:
                     loggedIn = false;
                     centerPrint("Logging out.");
                     break;
@@ -446,34 +450,59 @@ public class MainMenu {
     }
 
     private static void processTransaction(String studentId, String studentName, String type) {
-        System.out.print(centerText("Enter item name: "));
-        String itemName = readLineNoClear();
-        if (itemName.equals("")) {
-            clearScreen();
-            centerPrint("Item name cannot be empty.");
+        MyLinkedList<ReceiptLine> items = new MyLinkedList<>();
+
+        centerPrint("Building your " + type.toLowerCase() + " receipt. Add items one at a time.");
+        while (true) {
+            System.out.print(centerText("Enter item name (or 'done' to finish): "));
+            String itemName = readLineNoClear();
+            if (itemName.equalsIgnoreCase("done")) {
+                break;
+            }
+            if (itemName.equals("")) {
+                centerPrint("Item name cannot be empty.");
+                continue;
+            }
+
+            System.out.print(centerText("Enter quantity: "));
+            int quantity;
+            try {
+                quantity = Integer.parseInt(readLineNoClear());
+            } catch (NumberFormatException e) {
+                centerPrint("Invalid quantity.");
+                continue;
+            }
+            if (quantity <= 0) {
+                centerPrint("Quantity must be at least 1.");
+                continue;
+            }
+
+            if (type.equals("BORROW")) {
+                InventoryItem stock = inventory.searchItem(itemName);
+                if (stock == null) {
+                    centerPrint("Item not found in inventory.");
+                    continue;
+                }
+                if (quantity > stock.getQuantity()) {
+                    centerPrint("Not enough stock. Available: " + stock.getQuantity());
+                    continue;
+                }
+            }
+
+            items.add(new ReceiptLine(itemName, quantity));
+            centerPrint("Added: " + itemName + " x" + quantity + " (" + items.size() + " item(s) so far)");
+        }
+
+        clearScreen();
+
+        if (items.isEmpty()) {
+            centerPrint("No items added. Request cancelled.");
             return;
         }
 
-        System.out.print(centerText("Enter quantity: "));
-        int quantity = Integer.parseInt(readLineNoClear());
-        if (quantity <= 0) {
-            clearScreen();
-            centerPrint("Quantity must be at least 1.");
-            return;
-        }
-
-        if (type.equals("BORROW")) {
-            InventoryItem stock = inventory.searchItem(itemName);
-            if (stock == null) {
-                clearScreen();
-                centerPrint("Item not found in inventory.");
-                return;
-            }
-            if (quantity > stock.getQuantity()) {
-                clearScreen();
-                centerPrint("Not enough stock. Available: " + stock.getQuantity());
-                return;
-            }
+        centerPrint("Items in this receipt:");
+        for (int i = 0; i < items.size(); i++) {
+            centerPrint((i + 1) + ". " + items.get(i));
         }
 
         System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
@@ -489,12 +518,141 @@ public class MainMenu {
             return;
         }
 
-        Transaction t = history.record(studentId, studentName, itemName, quantity, type, date, time, purpose);
-        System.out.println();
-        String receipt = ReceiptGenerator.generate(t);
-        centerPrint(receipt);
+        Transaction t = history.record(studentId, studentName, items, type, date, time, purpose);
         DataStore.saveTransactions(history);
-        DataStore.appendReceipt(receipt);
+
+        String number = ReceiptGenerator.formatReceiptNumber(t.getTransactionId());
+        centerPrint("Request submitted as Receipt No. R-" + number + ". Pending lab technician approval.");
+    }
+
+    private static void editPendingReceipt(String studentId) {
+        MyLinkedList<Transaction> pending = history.getPendingByStudent(studentId);
+        if (pending.isEmpty()) {
+            centerPrint("You have no pending receipts to edit.");
+            return;
+        }
+
+        centerPrint("Your Pending Receipts:");
+        for (int i = 0; i < pending.size(); i++) {
+            centerPrint(pending.get(i).toString());
+        }
+
+        System.out.print(centerText("Enter the receipt number to edit (e.g. R-000002 or just 2): "));
+        String input = readLine().replace("R-", "").replace("r-", "").trim();
+        int id;
+        try {
+            id = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            centerPrint("Invalid receipt number.");
+            return;
+        }
+
+        Transaction t = history.findById(id);
+        if (t == null || !t.getStudentId().equals(studentId)) {
+            centerPrint("Receipt not found.");
+            return;
+        }
+        if (!t.getStatus().equals("PENDING")) {
+            centerPrint("This receipt has already been " + t.getStatus().toLowerCase() + " and can no longer be edited.");
+            return;
+        }
+
+        boolean editing = true;
+        while (editing) {
+            centerPrint(t.toString());
+            centerPrint("Items:");
+            for (int i = 0; i < t.getItems().size(); i++) {
+                centerPrint((i + 1) + ". " + t.getItems().get(i));
+            }
+            blockPrint("1. Add an item",
+                    "2. Edit an item's quantity",
+                    "3. Remove an item",
+                    "4. Edit purpose",
+                    "5. Done");
+            blockPrompt("Choose an option: ");
+            int choice = Integer.parseInt(readLine());
+
+            switch (choice) {
+                case 1: {
+                    System.out.print(centerText("Enter item name: "));
+                    String newItemName = readLineNoClear();
+                    System.out.print(centerText("Enter quantity: "));
+                    int newQuantity;
+                    try {
+                        newQuantity = Integer.parseInt(readLine());
+                    } catch (NumberFormatException e) {
+                        centerPrint("Invalid quantity.");
+                        break;
+                    }
+                    if (newItemName.equals("") || newQuantity <= 0) {
+                        centerPrint("Item name and quantity (at least 1) are required.");
+                        break;
+                    }
+                    t.addItem(newItemName, newQuantity);
+                    centerPrint("Item added.");
+                    break;
+                }
+                case 2: {
+                    System.out.print(centerText("Enter the item number to edit: "));
+                    int lineNum = Integer.parseInt(readLineNoClear());
+                    if (lineNum < 1 || lineNum > t.getItems().size()) {
+                        clearScreen();
+                        centerPrint("Invalid item number.");
+                        break;
+                    }
+                    System.out.print(centerText("Enter new quantity: "));
+                    int newQuantity;
+                    try {
+                        newQuantity = Integer.parseInt(readLine());
+                    } catch (NumberFormatException e) {
+                        centerPrint("Invalid quantity.");
+                        break;
+                    }
+                    if (newQuantity <= 0) {
+                        centerPrint("Quantity must be at least 1.");
+                        break;
+                    }
+                    t.getItems().get(lineNum - 1).setQuantity(newQuantity);
+                    centerPrint("Quantity updated.");
+                    break;
+                }
+                case 3: {
+                    if (t.getItems().size() <= 1) {
+                        centerPrint("A receipt needs at least one item, so this one can't be removed. Use 'Done' to cancel the whole receipt instead.");
+                        break;
+                    }
+                    System.out.print(centerText("Enter the item number to remove: "));
+                    int lineNum = Integer.parseInt(readLine());
+                    if (lineNum < 1 || lineNum > t.getItems().size()) {
+                        centerPrint("Invalid item number.");
+                        break;
+                    }
+                    t.removeItem(lineNum - 1);
+                    centerPrint("Item removed.");
+                    break;
+                }
+                case 4: {
+                    System.out.print(centerText("Enter new purpose: "));
+                    String newPurpose = readLine();
+                    if (newPurpose.equals("")) {
+                        centerPrint("Purpose cannot be empty.");
+                        break;
+                    }
+                    t.setPurpose(newPurpose);
+                    centerPrint("Purpose updated.");
+                    break;
+                }
+                case 5:
+                    editing = false;
+                    break;
+                default:
+                    centerPrint("Invalid option.");
+            }
+        }
+
+        DataStore.saveTransactions(history);
+        centerPrint("Receipt updated. Still pending lab technician approval.");
+        centerPrint(t.toString());
     }
 
     private static void viewMyReceipts(String studentId) {
@@ -577,48 +735,86 @@ public class MainMenu {
     }
 
     private static void approveTransaction() {
-        centerPrint("Pending Transactions:");
-        int pending = 0;
-        for (int i = 0; i < history.size(); i++) {
-            Transaction t = history.getAll().get(i);
-            if (t.getStatus().equals("PENDING")) {
-                centerPrint(t.toString());
-                pending++;
-            }
-        }
-        if (pending == 0) {
-            centerPrint("No pending transactions.");
-            return;
-        }
-
-        System.out.print(centerText("Enter transaction number to approve: "));
-        int id = Integer.parseInt(readLine());
-        Transaction selected = history.findById(id);
-        if (selected == null) {
-            centerPrint("Transaction not found.");
-            return;
-        }
-        if (selected.getStatus().equals("APPROVED")) {
-            centerPrint("Transaction is already approved.");
-            return;
-        }
-
-        if (selected.getType().equals("BORROW")) {
-            if (!inventory.borrowItem(selected.getItemName(), selected.getQuantity())) {
-                centerPrint("Cannot approve: item not found or not enough stock.");
+        while (true) {
+            MyLinkedList<Transaction> pending = history.getPending();
+            if (pending.isEmpty()) {
+                centerPrint("No pending transactions.");
                 return;
             }
-        } else {
-            if (!inventory.returnItem(selected.getItemName(), selected.getQuantity())) {
-                centerPrint("Cannot approve: item not found in inventory.");
+
+            centerPrint("Pending Transactions:");
+            for (int i = 0; i < pending.size(); i++) {
+                centerPrint(pending.get(i).toString());
+            }
+            System.out.print(centerText("Enter transaction number to review, or 0 to go back: "));
+            int id = Integer.parseInt(readLine());
+            if (id == 0) {
                 return;
+            }
+
+            Transaction selected = history.findById(id);
+            if (selected == null || !selected.getStatus().equals("PENDING")) {
+                centerPrint("That transaction isn't pending (it may already be decided, or doesn't exist).");
+                continue;
+            }
+
+            centerPrint("Reviewing:");
+            centerPrint(selected.toString());
+            centerPrint("Items:");
+            for (int i = 0; i < selected.getItems().size(); i++) {
+                centerPrint((i + 1) + ". " + selected.getItems().get(i));
+            }
+            blockPrint("1. Approve", "2. Reject", "3. Skip");
+            blockPrompt("Choose an option: ");
+            int action = Integer.parseInt(readLine());
+
+            if (action == 1) {
+                approveSelectedTransaction(selected);
+            } else if (action == 2) {
+                selected.setStatus("REJECTED");
+                DataStore.saveTransactions(history);
+                centerPrint("Transaction #" + id + " rejected.");
+            }
+        }
+    }
+
+    private static void approveSelectedTransaction(Transaction t) {
+        MyLinkedList<ReceiptLine> items = t.getItems();
+
+        // Check every line first, so approval is all-or-nothing rather than partially applied.
+        for (int i = 0; i < items.size(); i++) {
+            ReceiptLine line = items.get(i);
+            if (t.getType().equals("BORROW")) {
+                InventoryItem stock = inventory.searchItem(line.getItemName());
+                if (stock == null || stock.getQuantity() < line.getQuantity()) {
+                    centerPrint("Cannot approve: not enough stock for " + line.getItemName() + ".");
+                    return;
+                }
+            } else {
+                if (inventory.searchItem(line.getItemName()) == null) {
+                    centerPrint("Cannot approve: " + line.getItemName() + " is not a recognized inventory item.");
+                    return;
+                }
+            }
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            ReceiptLine line = items.get(i);
+            if (t.getType().equals("BORROW")) {
+                inventory.borrowItem(line.getItemName(), line.getQuantity());
+            } else {
+                inventory.returnItem(line.getItemName(), line.getQuantity());
             }
         }
         DataStore.saveInventory(inventory);
 
-        selected.setStatus("APPROVED");
+        t.setStatus("APPROVED");
         DataStore.saveTransactions(history);
-        centerPrint("Transaction #" + id + " approved.");
+
+        String receipt = ReceiptGenerator.generate(t);
+        centerPrint("Approved. Receipt given to student:");
+        centerPrint(receipt);
+        DataStore.appendReceipt(receipt);
     }
 
     private static void showStudentList() {
