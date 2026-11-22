@@ -21,6 +21,8 @@ public class ReceiptGenerator {
         sb.append("Time        : ").append(t.getTime()).append("\n");
         sb.append("Student Name: ").append(t.getStudentName()).append("\n");
         sb.append("Student No. : ").append(t.getStudentId()).append("\n");
+        sb.append("Course ID   : ").append(t.getCourseId()).append("\n");
+        sb.append("Section     : ").append(t.getSection()).append("\n");
         sb.append("Type        : ").append(t.getType()).append("\n");
         sb.append("Purpose     : ").append(t.getPurpose()).append("\n");
         sb.append("Status      : ").append(t.getStatus()).append("\n");
