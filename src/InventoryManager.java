@@ -80,7 +80,7 @@ public class InventoryManager {
         if (item == null || item.getQuantity() < quantity) {
             return false;
         }
-        removeItem(itemName, quantity);
+        item.addQuantity(-quantity);
         return true;
     }
 

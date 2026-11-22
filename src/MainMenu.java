@@ -3,20 +3,105 @@ import java.util.Scanner;
 public class MainMenu {
 
     private static final int CONSOLE_WIDTH = 120;
+    private static final int MAX_QUANTITY = 9999;
 
     private static Scanner scanner = new Scanner(System.in);
     private static TransactionHistory history = new TransactionHistory();
     private static MyQueue<WaitingListEntry> waitingList = new MyQueue<>();
     private static InventoryManager inventory = new InventoryManager();
 
+    private static class BackException extends RuntimeException {
+    }
+
     private static String readLine() {
         String input = scanner.nextLine();
         clearScreen();
+        if (input.trim().equalsIgnoreCase("back")) {
+            throw new BackException();
+        }
         return input;
     }
 
     private static String readLineNoClear() {
-        return scanner.nextLine();
+        String input = scanner.nextLine();
+        if (input.trim().equalsIgnoreCase("back")) {
+            clearScreen();
+            throw new BackException();
+        }
+        return input;
+    }
+
+    private static String promptRequired(String question) {
+        while (true) {
+            System.out.print(centerText(question + " (or 'back'): "));
+            String value = readLineNoClear().trim();
+            if (value.equals("")) {
+                centerPrint("This field cannot be empty.");
+            } else if (!value.matches("[A-Za-z0-9]+")) {
+                centerPrint("Use letters and numbers only, with no spaces or symbols.");
+            } else {
+                return value.toUpperCase();
+            }
+        }
+    }
+
+    private static int toInt(String text) {
+        try {
+            return Integer.parseInt(text.trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static String promptHazard() {
+        while (true) {
+            System.out.print(centerText("Enter hazard label (toxic/flammable/fragile/none, or 'back'): "));
+            String value = readLine().trim().toLowerCase();
+            if (value.equals("")) {
+                return "none";
+            }
+            if (value.equals("toxic") || value.equals("flammable") || value.equals("fragile") || value.equals("none")) {
+                return value;
+            }
+            centerPrint("Invalid hazard label. Choose toxic, flammable, fragile, or none.");
+        }
+    }
+
+    private static int findLine(MyLinkedList<ReceiptLine> items, String itemName) {
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).getItemName().equals(itemName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static String checkLine(MyLinkedList<ReceiptLine> items, String type, String itemName, int quantity) {
+        InventoryItem stock = inventory.searchItem(itemName);
+        if (stock == null) {
+            return "Item not found in inventory.";
+        }
+        if (type.equals("BORROW")) {
+            int total = quantity;
+            int existing = findLine(items, itemName);
+            if (existing != -1) {
+                total += items.get(existing).getQuantity();
+            }
+            if (total > stock.getQuantity()) {
+                return "Not enough stock. Available: " + stock.getQuantity();
+            }
+        }
+        return null;
+    }
+
+    private static void addLine(MyLinkedList<ReceiptLine> items, String itemName, int quantity) {
+        int existing = findLine(items, itemName);
+        if (existing == -1) {
+            items.add(new ReceiptLine(itemName, quantity));
+        } else {
+            ReceiptLine line = items.get(existing);
+            line.setQuantity(line.getQuantity() + quantity);
+        }
     }
 
     private static void clearScreen() {
@@ -80,7 +165,12 @@ public class MainMenu {
             centerPrint("--------------------------------------------------------------------");
             blockPrint("1. Lab Technician", "2. Student", "3. Exit");
             blockPrompt("Select your role: ");
-            int roleChoice = Integer.parseInt(readLine());
+            int roleChoice;
+            try {
+                roleChoice = toInt(readLine());
+            } catch (BackException e) {
+                continue;
+            }
 
             if (roleChoice == 1) {
                 if (authenticate("19910858", "SuperSuperPass", "Lab Technician")) {
@@ -102,15 +192,16 @@ public class MainMenu {
     private static boolean authenticate(String expectedId, String expectedPass, String roleName) {
         while (true) {
             centerPrint("=== " + roleName + " Login ===");
-            System.out.print(centerText("Enter ID (or type 'back' to return): "));
-            String id = readLineNoClear();
-            if (id.equalsIgnoreCase("back")) {
-                clearScreen();
+            String id;
+            String pass;
+            try {
+                System.out.print(centerText("Enter ID (or type 'back' to return): "));
+                id = readLineNoClear();
+                System.out.print(centerText("Enter Password (or 'back' to return): "));
+                pass = readLine();
+            } catch (BackException e) {
                 return false;
             }
-
-            System.out.print(centerText("Enter Password: "));
-            String pass = readLine();
 
             if (id.equals(expectedId) && pass.equals(expectedPass)) {
                 centerPrint("Login successful! Welcome, " + roleName + ".");
@@ -206,46 +297,57 @@ public class MainMenu {
                     "9. View Student List",
                     "10. Approve Transaction",
                     "11. Logout");
-            blockPrompt("Choose an option: ");
-            int choice = Integer.parseInt(readLine());
+            blockPrompt("Choose an option (or 'back' to log out): ");
+            int choice;
+            try {
+                choice = toInt(readLine());
+            } catch (BackException e) {
+                loggedIn = false;
+                centerPrint("Logging out.");
+                continue;
+            }
 
-            switch (choice) {
-                case 1:
-                    insertItem();
-                    break;
-                case 2:
-                    removeItem();
-                    break;
-                case 3:
-                    searchItem();
-                    break;
-                case 4:
-                    showOverdueItems();
-                    break;
-                case 5:
-                    showTransactionHistory();
-                    break;
-                case 6:
-                    viewWaitingList();
-                    break;
-                case 7:
-                    serveNextInWaitingList();
-                    break;
-                case 8:
-                    sortInventory();
-                    break;
-                case 9:
-                    showStudentList();
-                    break;
-                case 10:
-                    approveTransaction();
-                    break;
-                case 11:
-                    loggedIn = false;
-                    centerPrint("Logging out.");
-                    break;
-                default:
-                    centerPrint("Invalid option.");
+            try {
+                switch (choice) {
+                    case 1:
+                        insertItem();
+                        break;
+                    case 2:
+                        removeItem();
+                        break;
+                    case 3:
+                        searchItem();
+                        break;
+                    case 4:
+                        showOverdueItems();
+                        break;
+                    case 5:
+                        showTransactionHistory();
+                        break;
+                    case 6:
+                        viewWaitingList();
+                        break;
+                    case 7:
+                        serveNextInWaitingList();
+                        break;
+                    case 8:
+                        sortInventory();
+                        break;
+                    case 9:
+                        showStudentList();
+                        break;
+                    case 10:
+                        approveTransaction();
+                        break;
+                    case 11:
+                        loggedIn = false;
+                        centerPrint("Logging out.");
+                        break;
+                    default:
+                        centerPrint("Invalid option.");
+                }
+            } catch (BackException e) {
+                centerPrint("Cancelled.");
             }
         }
     }
@@ -256,15 +358,19 @@ public class MainMenu {
                 "2. Measuring and Analytical Instruments",
                 "3. Personal Protective Equipment (PPE)",
                 "4. Chemicals");
-        blockPrompt("Choose a category: ");
-        int categoryChoice = Integer.parseInt(readLine());
+        blockPrompt("Choose a category (or 'back'): ");
+        int categoryChoice = toInt(readLine());
         String category = categoryFromChoice(categoryChoice);
+        if (category == null) {
+            centerPrint("Invalid category.");
+            return;
+        }
 
         // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
-        System.out.print(centerText("Enter item name: "));
-        String itemName = readLine();
+        System.out.print(centerText("Enter item name (or 'back'): "));
+        String itemName = readLine().trim();
         if (itemName.equals("")) {
             centerPrint("Item name cannot be empty.");
             return;
@@ -273,10 +379,10 @@ public class MainMenu {
         InventoryItem existing = inventory.searchItem(itemName);
         if (existing != null) {
             centerPrint("Item already exists (Category: " + existing.getCategory() + ", Hazard: " + existing.getHazardLabel() + ", Current Stock: " + existing.getQuantity() + ").");
-            System.out.print(centerText("Enter quantity to add: "));
-            int quantity = Integer.parseInt(readLine());
-            if (quantity <= 0) {
-                centerPrint("Quantity must be at least 1.");
+            System.out.print(centerText("Enter quantity to add (or 'back'): "));
+            int quantity = toInt(readLine());
+            if (quantity <= 0 || quantity > MAX_QUANTITY) {
+                centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
                 return;
             }
 
@@ -286,16 +392,12 @@ public class MainMenu {
             return;
         }
 
-        System.out.print(centerText("Enter hazard label (toxic/flammable/fragile/none): "));
-        String hazardLabel = readLine();
-        if (hazardLabel.equals("")) {
-            hazardLabel = "none";
-        }
+        String hazardLabel = promptHazard();
 
-        System.out.print(centerText("Enter quantity: "));
-        int quantity = Integer.parseInt(readLine());
-        if (quantity <= 0) {
-            centerPrint("Quantity must be at least 1.");
+        System.out.print(centerText("Enter quantity (or 'back'): "));
+        int quantity = toInt(readLine());
+        if (quantity <= 0 || quantity > MAX_QUANTITY) {
+            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
             return;
         }
 
@@ -315,7 +417,7 @@ public class MainMenu {
             case 4:
                 return "Chemicals";
             default:
-                return "Chemicals";
+                return null;
         }
     }
 
@@ -325,15 +427,19 @@ public class MainMenu {
                 "2. Measuring and Analytical Instruments",
                 "3. Personal Protective Equipment (PPE)",
                 "4. Chemicals");
-        blockPrompt("Choose a category: ");
-        int categoryChoice = Integer.parseInt(readLine());
+        blockPrompt("Choose a category (or 'back'): ");
+        int categoryChoice = toInt(readLine());
         String category = categoryFromChoice(categoryChoice);
+        if (category == null) {
+            centerPrint("Invalid category.");
+            return;
+        }
 
         // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
-        System.out.print(centerText("Enter item name: "));
-        String itemName = readLine();
+        System.out.print(centerText("Enter item name (or 'back'): "));
+        String itemName = readLine().trim();
 
         InventoryItem item = inventory.searchItem(itemName);
         if (item == null) {
@@ -341,10 +447,15 @@ public class MainMenu {
             return;
         }
 
-        System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + "): "));
-        int quantity = Integer.parseInt(readLine());
-        if (quantity <= 0) {
-            centerPrint("Quantity must be at least 1.");
+        System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + ", or 'back'): "));
+        int quantity = toInt(readLine());
+        if (quantity <= 0 || quantity > MAX_QUANTITY) {
+            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
+            return;
+        }
+
+        if (quantity > item.getQuantity()) {
+            centerPrint("Cannot remove more than the current stock (" + item.getQuantity() + ").");
             return;
         }
 
@@ -356,15 +467,15 @@ public class MainMenu {
     private static void searchItem() {
         centerPrint("Search item by:");
         blockPrint("1. Item Name", "2. Item ID");
-        blockPrompt("Choose an option: ");
-        int choice = Integer.parseInt(readLine());
+        blockPrompt("Choose an option (or 'back'): ");
+        int choice = toInt(readLine());
 
         InventoryItem item;
         if (choice == 1) {
-            System.out.print(centerText("Enter item name: "));
-            item = inventory.searchItem(readLine());
+            System.out.print(centerText("Enter item name (or 'back'): "));
+            item = inventory.searchItem(readLine().trim());
         } else if (choice == 2) {
-            System.out.print(centerText("Enter item ID (e.g. ITM-001 or 1): "));
+            System.out.print(centerText("Enter item ID (e.g. ITM-001 or 1, or 'back'): "));
             String input = readLine().trim().toUpperCase();
             if (input.startsWith("ITM-")) {
                 input = input.substring(4);
@@ -388,7 +499,12 @@ public class MainMenu {
     }
 
     private static void studentMenu(String studentId) {
-        String studentName = promptStudentName();
+        String studentName;
+        try {
+            studentName = promptStudentName();
+        } catch (BackException e) {
+            return;
+        }
         DataStore.addStudent(studentId);
         boolean loggedIn = true;
 
@@ -400,52 +516,70 @@ public class MainMenu {
                     "4. Join Waiting List",
                     "5. Edit Pending Receipt",
                     "6. Logout");
-            blockPrompt("Choose an option: ");
-            int choice = Integer.parseInt(readLine());
+            blockPrompt("Choose an option (or 'back' to log out): ");
+            int choice;
+            try {
+                choice = toInt(readLine());
+            } catch (BackException e) {
+                loggedIn = false;
+                centerPrint("Logging out.");
+                continue;
+            }
 
-            switch (choice) {
-                case 1:
-                    centerPrint("Select category to borrow from:");
-                    blockPrint("1. Glassware",
-                            "2. Measuring and Analytical Instruments",
-                            "3. Personal Protective Equipment (PPE)",
-                            "4. Chemicals");
-                    blockPrompt("Choose a category: ");
-                    int categoryChoice = Integer.parseInt(readLine());
-                    String category = categoryFromChoice(categoryChoice);
-                    showInventoryByCategory(category);
-                    processTransaction(studentId, studentName, "BORROW");
-                    break;
-                case 2:
-                    processTransaction(studentId, studentName, "RETURN");
-                    break;
-                case 3:
-                    viewMyReceipts(studentId);
-                    break;
-                case 4:
-                    joinWaitingList(studentId);
-                    break;
-                case 5:
-                    editPendingReceipt(studentId);
-                    break;
-                case 6:
-                    loggedIn = false;
-                    centerPrint("Logging out.");
-                    break;
-                default:
-                    centerPrint("Invalid option.");
+            try {
+                switch (choice) {
+                    case 1:
+                        centerPrint("Select category to borrow from:");
+                        blockPrint("1. Glassware",
+                                "2. Measuring and Analytical Instruments",
+                                "3. Personal Protective Equipment (PPE)",
+                                "4. Chemicals");
+                        blockPrompt("Choose a category (or 'back'): ");
+                        int categoryChoice = toInt(readLine());
+                        String category = categoryFromChoice(categoryChoice);
+                        if (category == null) {
+                            centerPrint("Invalid category.");
+                            break;
+                        }
+                        showInventoryByCategory(category);
+                        processTransaction(studentId, studentName, "BORROW");
+                        break;
+                    case 2:
+                        processTransaction(studentId, studentName, "RETURN");
+                        break;
+                    case 3:
+                        viewMyReceipts(studentId);
+                        break;
+                    case 4:
+                        joinWaitingList(studentId);
+                        break;
+                    case 5:
+                        editPendingReceipt(studentId);
+                        break;
+                    case 6:
+                        loggedIn = false;
+                        centerPrint("Logging out.");
+                        break;
+                    default:
+                        centerPrint("Invalid option.");
+                }
+            } catch (BackException e) {
+                centerPrint("Cancelled.");
             }
         }
     }
 
     private static String promptStudentName() {
         while (true) {
-            System.out.print(centerText("Enter your full name: "));
-            String name = readLine();
-            if (!name.equals("")) {
+            System.out.print(centerText("Enter your full name (or 'back'): "));
+            String name = readLine().trim();
+            if (name.equals("")) {
+                centerPrint("Name cannot be empty.");
+            } else if (!name.matches("[\\p{L} .'-]+")) {
+                centerPrint("Name can only contain letters, spaces, periods, hyphens, and apostrophes.");
+            } else {
                 return name;
             }
-            centerPrint("Name cannot be empty.");
         }
     }
 
@@ -454,8 +588,8 @@ public class MainMenu {
 
         centerPrint("Building your " + type.toLowerCase() + " receipt. Add items one at a time.");
         while (true) {
-            System.out.print(centerText("Enter item name (or 'done' to finish): "));
-            String itemName = readLineNoClear();
+            System.out.print(centerText("Enter item name (or 'done' to finish, or 'back' to cancel): "));
+            String itemName = readLineNoClear().trim();
             if (itemName.equalsIgnoreCase("done")) {
                 break;
             }
@@ -464,32 +598,20 @@ public class MainMenu {
                 continue;
             }
 
-            System.out.print(centerText("Enter quantity: "));
-            int quantity;
-            try {
-                quantity = Integer.parseInt(readLineNoClear());
-            } catch (NumberFormatException e) {
-                centerPrint("Invalid quantity.");
-                continue;
-            }
-            if (quantity <= 0) {
-                centerPrint("Quantity must be at least 1.");
+            System.out.print(centerText("Enter quantity (or 'back'): "));
+            int quantity = toInt(readLineNoClear());
+            if (quantity <= 0 || quantity > MAX_QUANTITY) {
+                centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
                 continue;
             }
 
-            if (type.equals("BORROW")) {
-                InventoryItem stock = inventory.searchItem(itemName);
-                if (stock == null) {
-                    centerPrint("Item not found in inventory.");
-                    continue;
-                }
-                if (quantity > stock.getQuantity()) {
-                    centerPrint("Not enough stock. Available: " + stock.getQuantity());
-                    continue;
-                }
+            String problem = checkLine(items, type, itemName, quantity);
+            if (problem != null) {
+                centerPrint(problem);
+                continue;
             }
 
-            items.add(new ReceiptLine(itemName, quantity));
+            addLine(items, itemName, quantity);
             centerPrint("Added: " + itemName + " x" + quantity + " (" + items.size() + " item(s) so far)");
         }
 
@@ -505,20 +627,25 @@ public class MainMenu {
             centerPrint((i + 1) + ". " + items.get(i));
         }
 
-        System.out.print(centerText("Enter today's date (MM/DD/YYYY): "));
+        System.out.print(centerText("Enter today's date (MM/DD/YYYY, or 'back'): "));
         String date = readLineNoClear();
 
-        System.out.print(centerText("Enter time (HH:MM): "));
+        System.out.print(centerText("Enter time (HH:MM, or 'back'): "));
         String time = readLineNoClear();
 
-        System.out.print(centerText("Enter purpose: "));
-        String purpose = readLine();
+        String courseId = promptRequired("Enter course ID, e.g. LBYCH1A");
+        String section = promptRequired("Enter section, e.g. E28");
+
+        System.out.print(centerText("Enter purpose (or 'back'): "));
+        String purpose = readLine().trim();
         if (purpose.equals("")) {
             centerPrint("Purpose cannot be empty.");
             return;
         }
 
         Transaction t = history.record(studentId, studentName, items, type, date, time, purpose);
+        t.setCourseId(courseId);
+        t.setSection(section);
         DataStore.saveTransactions(history);
 
         String number = ReceiptGenerator.formatReceiptNumber(t.getTransactionId());
@@ -537,7 +664,7 @@ public class MainMenu {
             centerPrint(pending.get(i).toString());
         }
 
-        System.out.print(centerText("Enter the receipt number to edit (e.g. R-000002 or just 2): "));
+        System.out.print(centerText("Enter the receipt number to edit (e.g. R-000002 or just 2, or 'back'): "));
         String input = readLine().replace("R-", "").replace("r-", "").trim();
         int id;
         try {
@@ -560,6 +687,7 @@ public class MainMenu {
         boolean editing = true;
         while (editing) {
             centerPrint(t.toString());
+            centerPrint("Course / Section: " + t.getCourseId() + " / " + t.getSection());
             centerPrint("Items:");
             for (int i = 0; i < t.getItems().size(); i++) {
                 centerPrint((i + 1) + ". " + t.getItems().get(i));
@@ -568,85 +696,107 @@ public class MainMenu {
                     "2. Edit an item's quantity",
                     "3. Remove an item",
                     "4. Edit purpose",
-                    "5. Done");
-            blockPrompt("Choose an option: ");
-            int choice = Integer.parseInt(readLine());
+                    "5. Edit course ID and section",
+                    "6. Done");
+            blockPrompt("Choose an option (or 'back' to finish): ");
+            int choice;
+            try {
+                choice = toInt(readLine());
+            } catch (BackException e) {
+                editing = false;
+                continue;
+            }
 
-            switch (choice) {
-                case 1: {
-                    System.out.print(centerText("Enter item name: "));
-                    String newItemName = readLineNoClear();
-                    System.out.print(centerText("Enter quantity: "));
-                    int newQuantity;
-                    try {
-                        newQuantity = Integer.parseInt(readLine());
-                    } catch (NumberFormatException e) {
-                        centerPrint("Invalid quantity.");
+            try {
+                switch (choice) {
+                    case 1: {
+                        System.out.print(centerText("Enter item name (or 'back'): "));
+                        String newItemName = readLineNoClear().trim();
+                        System.out.print(centerText("Enter quantity (or 'back'): "));
+                        int newQuantity = toInt(readLine());
+                        if (newItemName.equals("")) {
+                            centerPrint("Item name cannot be empty.");
+                            break;
+                        }
+                        if (newQuantity <= 0 || newQuantity > MAX_QUANTITY) {
+                            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
+                            break;
+                        }
+                        String problem = checkLine(t.getItems(), t.getType(), newItemName, newQuantity);
+                        if (problem != null) {
+                            centerPrint(problem);
+                            break;
+                        }
+                        addLine(t.getItems(), newItemName, newQuantity);
+                        centerPrint("Item added.");
                         break;
                     }
-                    if (newItemName.equals("") || newQuantity <= 0) {
-                        centerPrint("Item name and quantity (at least 1) are required.");
+                    case 2: {
+                        System.out.print(centerText("Enter the item number to edit (or 'back'): "));
+                        int lineNum = toInt(readLineNoClear());
+                        if (lineNum < 1 || lineNum > t.getItems().size()) {
+                            clearScreen();
+                            centerPrint("Invalid item number.");
+                            break;
+                        }
+                        System.out.print(centerText("Enter new quantity (or 'back'): "));
+                        int newQuantity = toInt(readLine());
+                        if (newQuantity <= 0 || newQuantity > MAX_QUANTITY) {
+                            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
+                            break;
+                        }
+                        ReceiptLine line = t.getItems().get(lineNum - 1);
+                        InventoryItem stock = inventory.searchItem(line.getItemName());
+                        if (t.getType().equals("BORROW") && (stock == null || newQuantity > stock.getQuantity())) {
+                            centerPrint("Not enough stock. Available: " + (stock == null ? 0 : stock.getQuantity()));
+                            break;
+                        }
+                        line.setQuantity(newQuantity);
+                        centerPrint("Quantity updated.");
                         break;
                     }
-                    t.addItem(newItemName, newQuantity);
-                    centerPrint("Item added.");
-                    break;
+                    case 3: {
+                        if (t.getItems().size() <= 1) {
+                            centerPrint("A receipt needs at least one item, so this one can't be removed. Use 'Done' to cancel the whole receipt instead.");
+                            break;
+                        }
+                        System.out.print(centerText("Enter the item number to remove (or 'back'): "));
+                        int lineNum = toInt(readLine());
+                        if (lineNum < 1 || lineNum > t.getItems().size()) {
+                            centerPrint("Invalid item number.");
+                            break;
+                        }
+                        t.removeItem(lineNum - 1);
+                        centerPrint("Item removed.");
+                        break;
+                    }
+                    case 4: {
+                        System.out.print(centerText("Enter new purpose (or 'back'): "));
+                        String newPurpose = readLine().trim();
+                        if (newPurpose.equals("")) {
+                            centerPrint("Purpose cannot be empty.");
+                            break;
+                        }
+                        t.setPurpose(newPurpose);
+                        centerPrint("Purpose updated.");
+                        break;
+                    }
+                    case 5: {
+                        String newCourseId = promptRequired("Enter new course ID, e.g. LBYCH1A");
+                        String newSection = promptRequired("Enter new section, e.g. E28");
+                        t.setCourseId(newCourseId);
+                        t.setSection(newSection);
+                        centerPrint("Course ID and section updated.");
+                        break;
+                    }
+                    case 6:
+                        editing = false;
+                        break;
+                    default:
+                        centerPrint("Invalid option.");
                 }
-                case 2: {
-                    System.out.print(centerText("Enter the item number to edit: "));
-                    int lineNum = Integer.parseInt(readLineNoClear());
-                    if (lineNum < 1 || lineNum > t.getItems().size()) {
-                        clearScreen();
-                        centerPrint("Invalid item number.");
-                        break;
-                    }
-                    System.out.print(centerText("Enter new quantity: "));
-                    int newQuantity;
-                    try {
-                        newQuantity = Integer.parseInt(readLine());
-                    } catch (NumberFormatException e) {
-                        centerPrint("Invalid quantity.");
-                        break;
-                    }
-                    if (newQuantity <= 0) {
-                        centerPrint("Quantity must be at least 1.");
-                        break;
-                    }
-                    t.getItems().get(lineNum - 1).setQuantity(newQuantity);
-                    centerPrint("Quantity updated.");
-                    break;
-                }
-                case 3: {
-                    if (t.getItems().size() <= 1) {
-                        centerPrint("A receipt needs at least one item, so this one can't be removed. Use 'Done' to cancel the whole receipt instead.");
-                        break;
-                    }
-                    System.out.print(centerText("Enter the item number to remove: "));
-                    int lineNum = Integer.parseInt(readLine());
-                    if (lineNum < 1 || lineNum > t.getItems().size()) {
-                        centerPrint("Invalid item number.");
-                        break;
-                    }
-                    t.removeItem(lineNum - 1);
-                    centerPrint("Item removed.");
-                    break;
-                }
-                case 4: {
-                    System.out.print(centerText("Enter new purpose: "));
-                    String newPurpose = readLine();
-                    if (newPurpose.equals("")) {
-                        centerPrint("Purpose cannot be empty.");
-                        break;
-                    }
-                    t.setPurpose(newPurpose);
-                    centerPrint("Purpose updated.");
-                    break;
-                }
-                case 5:
-                    editing = false;
-                    break;
-                default:
-                    centerPrint("Invalid option.");
+            } catch (BackException e) {
+                centerPrint("Cancelled.");
             }
         }
 
@@ -674,17 +824,22 @@ public class MainMenu {
     }
 
     private static void joinWaitingList(String studentId) {
-        System.out.print(centerText("Enter item name: "));
-        String itemName = readLine();
+        System.out.print(centerText("Enter item name (or 'back'): "));
+        String itemName = readLine().trim();
         if (itemName.equals("")) {
             centerPrint("Item name cannot be empty.");
             return;
         }
 
-        System.out.print(centerText("Enter quantity: "));
-        int quantity = Integer.parseInt(readLine());
-        if (quantity <= 0) {
-            centerPrint("Quantity must be at least 1.");
+        if (inventory.searchItem(itemName) == null) {
+            centerPrint("Item not found in inventory.");
+            return;
+        }
+
+        System.out.print(centerText("Enter quantity (or 'back'): "));
+        int quantity = toInt(readLine());
+        if (quantity <= 0 || quantity > MAX_QUANTITY) {
+            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
             return;
         }
 
@@ -719,8 +874,8 @@ public class MainMenu {
     private static void sortInventory() {
         centerPrint("Sort inventory by:");
         blockPrint("1. Name", "2. Category");
-        blockPrompt("Choose an option: ");
-        int choice = Integer.parseInt(readLine());
+        blockPrompt("Choose an option (or 'back'): ");
+        int choice = toInt(readLine());
 
         if (choice == 1) {
             inventory.sortByName();
@@ -746,11 +901,8 @@ public class MainMenu {
             for (int i = 0; i < pending.size(); i++) {
                 centerPrint(pending.get(i).toString());
             }
-            System.out.print(centerText("Enter transaction number to review, or 0 to go back: "));
-            int id = Integer.parseInt(readLine());
-            if (id == 0) {
-                return;
-            }
+            System.out.print(centerText("Enter transaction number to review (or 'back'): "));
+            int id = toInt(readLine());
 
             Transaction selected = history.findById(id);
             if (selected == null || !selected.getStatus().equals("PENDING")) {
@@ -765,8 +917,13 @@ public class MainMenu {
                 centerPrint((i + 1) + ". " + selected.getItems().get(i));
             }
             blockPrint("1. Approve", "2. Reject", "3. Skip");
-            blockPrompt("Choose an option: ");
-            int action = Integer.parseInt(readLine());
+            blockPrompt("Choose an option (or 'back'): ");
+            int action;
+            try {
+                action = toInt(readLine());
+            } catch (BackException e) {
+                continue;
+            }
 
             if (action == 1) {
                 approveSelectedTransaction(selected);
