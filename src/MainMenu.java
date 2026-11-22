@@ -219,10 +219,23 @@ public class MainMenu {
         return str.substring(0, maxLen - 3) + "...";
     }
 
+    /** Looks up an item from user input such as "ITM-001" or "1". Returns null if invalid or not found. */
+    private static InventoryItem findItemById(String raw) {
+        String input = raw.trim().toUpperCase();
+        if (input.startsWith("ITM-")) {
+            input = input.substring(4);
+        }
+        try {
+            return inventory.searchItemById(Integer.parseInt(input));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private static void showInventorySummary() {
         InventoryItem[] allItems = inventory.getAll();
-        String border = "+------+-----------------------------------+---------------------------------------+--------------+----------+";
-        String header = String.format("| %-4s | %-33s | %-37s | %-12s | %-8s |", "No.", "Item Name", "Category", "Hazard", "Quantity");
+        String border = "+---------+--------------------------------+---------------------------------------+--------------+----------+";
+        String header = String.format("| %-7s | %-30s | %-37s | %-12s | %-8s |", "Item ID", "Item Name", "Category", "Hazard", "Quantity");
 
         centerPrint("CURRENT INVENTORY");
         centerPrint(border);
@@ -230,13 +243,13 @@ public class MainMenu {
         centerPrint(border);
 
         if (allItems.length == 0) {
-            centerPrint(String.format("| %-104s |", "No items in inventory yet."));
+            centerPrint(String.format("| %-106s |", "No items in inventory yet."));
         } else {
             for (int i = 0; i < allItems.length; i++) {
                 InventoryItem item = allItems[i];
-                String row = String.format("| %-4d | %-33s | %-37s | %-12s | %8d |",
-                        (i + 1),
-                        truncate(item.getItemName(), 33),
+                String row = String.format("| %-7s | %-30s | %-37s | %-12s | %8d |",
+                        item.getFormattedId(),
+                        truncate(item.getItemName(), 30),
                         truncate(item.getCategory(), 37),
                         truncate(item.getHazardLabel(), 12),
                         item.getQuantity());
@@ -249,8 +262,8 @@ public class MainMenu {
 
     private static void showInventoryByCategory(String category) {
         InventoryItem[] allItems = inventory.getAll();
-        String border = "+------+----------------------------------------+--------------+----------+";
-        String header = String.format("| %-4s | %-38s | %-12s | %-8s |", "No.", "Item Name", "Hazard", "Quantity");
+        String border = "+---------+-----------------------------------+--------------+----------+";
+        String header = String.format("| %-7s | %-35s | %-12s | %-8s |", "Item ID", "Item Name", "Hazard", "Quantity");
 
         centerPrint("CATEGORY: " + category.toUpperCase());
         centerPrint(border);
@@ -258,19 +271,17 @@ public class MainMenu {
         centerPrint(border);
 
         boolean found = false;
-        int count = 1;
 
         for (int i = 0; i < allItems.length; i++) {
             if (allItems[i].getCategory().equals(category)) {
                 InventoryItem item = allItems[i];
-                String row = String.format("| %-4d | %-38s | %-12s | %8d |",
-                        count,
-                        truncate(item.getItemName(), 38),
+                String row = String.format("| %-7s | %-35s | %-12s | %8d |",
+                        item.getFormattedId(),
+                        truncate(item.getItemName(), 35),
                         truncate(item.getHazardLabel(), 12),
                         item.getQuantity());
                 centerPrint(row);
                 found = true;
-                count++;
             }
         }
 
@@ -293,10 +304,11 @@ public class MainMenu {
                     "5. View Transaction History",
                     "6. View Waiting List",
                     "7. Serve Next in Waiting List",
-                    "8. Sort Inventory",
-                    "9. View Student List",
-                    "10. Approve Transaction",
-                    "11. Logout");
+                    "8. View Inventory",
+                    "9. Sort Inventory",
+                    "10. View Student List",
+                    "11. Approve Transaction",
+                    "12. Logout");
             blockPrompt("Choose an option (or 'back' to log out): ");
             int choice;
             try {
@@ -331,15 +343,18 @@ public class MainMenu {
                         serveNextInWaitingList();
                         break;
                     case 8:
-                        sortInventory();
+                        showInventorySummary();
                         break;
                     case 9:
-                        showStudentList();
+                        sortInventory();
                         break;
                     case 10:
-                        approveTransaction();
+                        showStudentList();
                         break;
                     case 11:
+                        approveTransaction();
+                        break;
+                    case 12:
                         loggedIn = false;
                         centerPrint("Logging out.");
                         break;
@@ -369,14 +384,28 @@ public class MainMenu {
         // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
-        System.out.print(centerText("Enter item name (or 'back'): "));
-        String itemName = readLine().trim();
-        if (itemName.equals("")) {
-            centerPrint("Item name cannot be empty.");
-            return;
+        System.out.print(centerText("Enter item ID to restock, or type NEW to add a new item (or 'back'): "));
+        String idInput = readLine().trim();
+
+        InventoryItem existing;
+        String itemName;
+        if (idInput.equalsIgnoreCase("new")) {
+            System.out.print(centerText("Enter new item name (or 'back'): "));
+            itemName = readLine().trim();
+            if (itemName.equals("")) {
+                centerPrint("Item name cannot be empty.");
+                return;
+            }
+            existing = inventory.searchItem(itemName);
+        } else {
+            existing = findItemById(idInput);
+            if (existing == null) {
+                centerPrint("Item ID not found. Type NEW to add a new item.");
+                return;
+            }
+            itemName = existing.getItemName();
         }
 
-        InventoryItem existing = inventory.searchItem(itemName);
         if (existing != null) {
             centerPrint("Item already exists (Category: " + existing.getCategory() + ", Hazard: " + existing.getHazardLabel() + ", Current Stock: " + existing.getQuantity() + ").");
             System.out.print(centerText("Enter quantity to add (or 'back'): "));
@@ -438,14 +467,13 @@ public class MainMenu {
         // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
-        System.out.print(centerText("Enter item name (or 'back'): "));
-        String itemName = readLine().trim();
-
-        InventoryItem item = inventory.searchItem(itemName);
+        System.out.print(centerText("Enter item ID, e.g. ITM-001 or 1 (or 'back'): "));
+        InventoryItem item = findItemById(readLine());
         if (item == null) {
-            centerPrint("Item not found in inventory.");
+            centerPrint("Item ID not found in inventory.");
             return;
         }
+        String itemName = item.getItemName();
 
         System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + ", or 'back'): "));
         int quantity = toInt(readLine());
@@ -588,15 +616,21 @@ public class MainMenu {
 
         centerPrint("Building your " + type.toLowerCase() + " receipt. Add items one at a time.");
         while (true) {
-            System.out.print(centerText("Enter item name (or 'done' to finish, or 'back' to cancel): "));
-            String itemName = readLineNoClear().trim();
-            if (itemName.equalsIgnoreCase("done")) {
+            System.out.print(centerText("Enter item ID (or 'done' to finish, or 'back' to cancel): "));
+            String idInput = readLineNoClear().trim();
+            if (idInput.equalsIgnoreCase("done")) {
                 break;
             }
-            if (itemName.equals("")) {
-                centerPrint("Item name cannot be empty.");
+            if (idInput.equals("")) {
+                centerPrint("Item ID cannot be empty.");
                 continue;
             }
+            InventoryItem chosen = findItemById(idInput);
+            if (chosen == null) {
+                centerPrint("Item ID not found in inventory.");
+                continue;
+            }
+            String itemName = chosen.getItemName();
 
             System.out.print(centerText("Enter quantity (or 'back'): "));
             int quantity = toInt(readLineNoClear());
@@ -710,14 +744,15 @@ public class MainMenu {
             try {
                 switch (choice) {
                     case 1: {
-                        System.out.print(centerText("Enter item name (or 'back'): "));
-                        String newItemName = readLineNoClear().trim();
-                        System.out.print(centerText("Enter quantity (or 'back'): "));
-                        int newQuantity = toInt(readLine());
-                        if (newItemName.equals("")) {
-                            centerPrint("Item name cannot be empty.");
+                        System.out.print(centerText("Enter item ID (or 'back'): "));
+                        InventoryItem newItem = findItemById(readLineNoClear());
+                        if (newItem == null) {
+                            centerPrint("Item ID not found in inventory.");
                             break;
                         }
+                        String newItemName = newItem.getItemName();
+                        System.out.print(centerText("Enter quantity (or 'back'): "));
+                        int newQuantity = toInt(readLine());
                         if (newQuantity <= 0 || newQuantity > MAX_QUANTITY) {
                             centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
                             break;
@@ -824,17 +859,13 @@ public class MainMenu {
     }
 
     private static void joinWaitingList(String studentId) {
-        System.out.print(centerText("Enter item name (or 'back'): "));
-        String itemName = readLine().trim();
-        if (itemName.equals("")) {
-            centerPrint("Item name cannot be empty.");
+        System.out.print(centerText("Enter item ID, e.g. ITM-001 or 1 (or 'back'): "));
+        InventoryItem waitItem = findItemById(readLine());
+        if (waitItem == null) {
+            centerPrint("Item ID not found in inventory.");
             return;
         }
-
-        if (inventory.searchItem(itemName) == null) {
-            centerPrint("Item not found in inventory.");
-            return;
-        }
+        String itemName = waitItem.getItemName();
 
         System.out.print(centerText("Enter quantity (or 'back'): "));
         int quantity = toInt(readLine());
@@ -873,7 +904,7 @@ public class MainMenu {
 
     private static void sortInventory() {
         centerPrint("Sort inventory by:");
-        blockPrint("1. Name", "2. Category");
+        blockPrint("1. Name", "2. Category", "3. Item Number");
         blockPrompt("Choose an option (or 'back'): ");
         int choice = toInt(readLine());
 
@@ -881,6 +912,8 @@ public class MainMenu {
             inventory.sortByName();
         } else if (choice == 2) {
             inventory.sortByCategory();
+        } else if (choice == 3) {
+            inventory.sortById();
         } else {
             centerPrint("Invalid option.");
             return;

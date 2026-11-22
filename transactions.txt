@@ -1,1 +1,2 @@
-1|12512353|Jeerho Laylo|Glass Funnel 75mm:10;Beaker 50mL:2|BORROW|11/21/2026|19:14|Lab Experiments|APPROVED
+1|12512353|Jeerho Laylo|Glass Funnel 75mm:10;Beaker 50mL:2|BORROW|11/21/2026|19:14|Lab Experiments|APPROVED|N/A|N/A
+2|12512353|Mar Tanglao II|Bunsen Burner:2;Beaker 250mL:5|BORROW|11/22/2026|11:21|Lab Experiment|PENDING|LBYCH1A|E28

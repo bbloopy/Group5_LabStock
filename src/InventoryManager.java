@@ -143,6 +143,19 @@ public class InventoryManager {
         rebuildIndex();
     }
 
+    public void sortById() {
+        for (int i = 1; i < size; i++) {
+            InventoryItem key = items[i];
+            int j = i - 1;
+            while (j >= 0 && items[j].getItemId() > key.getItemId()) {
+                items[j + 1] = items[j];
+                j--;
+            }
+            items[j + 1] = key;
+        }
+        rebuildIndex();
+    }
+
     private void rebuildIndex() {
         for (int i = 0; i < size; i++) {
             nameIndex.put(items[i].getItemName(), i);
