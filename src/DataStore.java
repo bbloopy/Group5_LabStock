@@ -94,7 +94,8 @@ public class DataStore {
                 out.println(t.getTransactionId() + "|" + clean(t.getStudentId()) + "|"
                         + clean(t.getStudentName()) + "|" + encodeItems(t.getItems()) + "|"
                         + clean(t.getType()) + "|" + clean(t.getDate()) + "|"
-                        + clean(t.getTime()) + "|" + clean(t.getPurpose()) + "|" + clean(t.getStatus()));
+                        + clean(t.getTime()) + "|" + clean(t.getPurpose()) + "|" + clean(t.getStatus()) + "|"
+                        + clean(t.getCourseId()) + "|" + clean(t.getSection()));
             }
             out.close();
         } catch (Exception e) {
@@ -111,10 +112,14 @@ public class DataStore {
             Scanner in = new Scanner(file);
             while (in.hasNextLine()) {
                 String[] p = in.nextLine().split("\\|", -1);
-                if (p.length == 9) {
+                if (p.length == 9 || p.length == 11) {
                     Transaction t = new Transaction(Integer.parseInt(p[0].trim()), p[1], p[2], decodeItems(p[3]),
                             p[4], p[5], p[6], p[7]);
                     t.setStatus(p[8]);
+                    if (p.length == 11) {
+                        t.setCourseId(p[9]);
+                        t.setSection(p[10]);
+                    }
                     history.restore(t);
                 }
             }
