@@ -9,6 +9,8 @@ public class Transaction {
     private String time;
     private String purpose;
     private String status = "PENDING";
+    private String courseId = "N/A";
+    private String section = "N/A";
 
     public Transaction(int transactionId, String studentId, String studentName, MyLinkedList<ReceiptLine> items,
                        String type, String date, String time, String purpose) {
@@ -80,6 +82,22 @@ public class Transaction {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
+    }
+
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
     }
 
     @Override
