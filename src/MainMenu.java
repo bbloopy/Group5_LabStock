@@ -120,7 +120,6 @@ public class MainMenu {
         return sb.toString();
     }
 
-    /** Centers a line of text and prints it */
     private static void centerPrint(String text) {
         String[] lines = text.split("\\R", -1);
         for (int i = 0; i < lines.length; i++) {
@@ -155,28 +154,74 @@ public class MainMenu {
         System.out.print(sb + prompt);
     }
 
+    private static void drawWindow(String title, String[] lines) {
+        int windowWidth = 60;
+        if (title.length() > windowWidth) {
+            title = title.substring(0, windowWidth - 2);
+        }
+
+        int leftPad = Math.max(0, (CONSOLE_WIDTH - windowWidth - 2) / 2);
+        StringBuilder marginSb = new StringBuilder();
+        for (int i = 0; i < leftPad; i++) marginSb.append(" ");
+        String m = marginSb.toString();
+
+        StringBuilder borderSb = new StringBuilder();
+        for (int i = 0; i < windowWidth; i++) borderSb.append("=");
+        String border = m + "+" + borderSb.toString() + "+";
+        String separator = m + "+" + borderSb.toString().replace('=', '-') + "+";
+
+        System.out.println(border);
+
+        int titlePadLeft = (windowWidth - title.length()) / 2;
+        int titlePadRight = windowWidth - title.length() - titlePadLeft;
+        StringBuilder titleLine = new StringBuilder();
+        for (int i = 0; i < titlePadLeft; i++) titleLine.append(" ");
+        titleLine.append(title);
+        for (int i = 0; i < titlePadRight; i++) titleLine.append(" ");
+        System.out.println(m + "|" + titleLine.toString() + "|");
+
+        System.out.println(separator);
+
+        for (int i = 0; i < lines.length; i++) {
+            String lineText = "   " + lines[i];
+            int rightPad = Math.max(0, windowWidth - lineText.length());
+            StringBuilder lineSb = new StringBuilder(lineText);
+            for (int j = 0; j < rightPad; j++) lineSb.append(" ");
+
+            if (lineSb.length() > windowWidth) {
+                lineSb.setLength(windowWidth);
+            }
+            System.out.println(m + "|" + lineSb.toString() + "|");
+        }
+
+        System.out.println(border);
+        System.out.println();
+    }
+
     public static void main(String[] args) {
         DataStore.loadInventory(inventory);
         DataStore.loadTransactions(history);
         DataStore.loadWaitingList(waitingList);
 
-        // Lab Credentials
         MyHashTable<String, String> labTechs = new MyHashTable<>();
         labTechs.put("19910858", "SuperSuperPass");
         labTechs.put("12414234", "Password123");
         labTechs.put("11485305", "qwertyuiop");
 
-        // Student Credentials
         MyHashTable<String, String> students = new MyHashTable<>();
         students.put("12512353", "SuperPass");
         students.put("12510092", "WeakPassword");
         students.put("12275934", "asdfghjkl");
 
         while (true) {
-            centerPrint("LabStock: Chemistry Equipment Borrowing System");
-            centerPrint("--------------------------------------------------------------------");
-            blockPrint("1. Lab Technician", "2. Student", "3. Exit");
-            blockPrompt("Select your role: ");
+            String[] mainOptions = {
+                    "1. Lab Technician",
+                    "2. Student",
+                    "3. Exit"
+            };
+            drawWindow("LabStock: Chemistry Equipment Borrowing System", mainOptions);
+            System.out.print(centerText("Select your role: "));
+
             int roleChoice;
             try {
                 roleChoice = toInt(readLine());
@@ -205,14 +250,29 @@ public class MainMenu {
 
     private static String authenticate(MyHashTable<String, String> credentials, String roleName) {
         while (true) {
-            centerPrint("=== " + roleName + " Login ===");
+            String[] loginInfo = {
+                    "Authorized personnel only.",
+                    "Type 'back' at any prompt to cancel."
+            };
+            drawWindow(roleName + " Login", loginInfo);
+
             String id;
             String pass;
             try {
-                System.out.print(centerText("Enter ID (or type 'back' to return): "));
+                System.out.print(centerText("Enter ID: "));
                 id = readLineNoClear();
-                System.out.print(centerText("Enter Password (or 'back' to return): "));
-                pass = readLine();
+
+                System.out.print(centerText("Enter Password: "));
+                java.io.Console console = System.console();
+                if (console != null) {
+                    char[] passArray = console.readPassword();
+                    if (passArray == null) return null;
+                    pass = new String(passArray);
+                    clearScreen();
+                    if (pass.trim().equalsIgnoreCase("back")) throw new BackException();
+                } else {
+                    pass = readLine();
+                }
             } catch (BackException e) {
                 return null;
             }
@@ -222,6 +282,7 @@ public class MainMenu {
                 return id;
             } else {
                 centerPrint("Invalid ID or Password. Please try again.");
+                System.out.println();
             }
         }
     }
@@ -233,7 +294,6 @@ public class MainMenu {
         return str.substring(0, maxLen - 3) + "...";
     }
 
-    /** Looks up an item from user input such as "ITM-001" or "1". Returns null if invalid or not found. */
     private static InventoryItem findItemById(String raw) {
         String input = raw.trim().toUpperCase();
         if (input.startsWith("ITM-")) {
@@ -310,20 +370,15 @@ public class MainMenu {
         boolean loggedIn = true;
 
         while (loggedIn) {
-            centerPrint("Lab Technician Menu");
-            blockPrint("1. Insert Item",
-                    "2. Remove Item",
-                    "3. Search Item",
-                    "4. View Overdue Items",
-                    "5. View Transaction History",
-                    "6. View Waiting List",
-                    "7. Serve Next in Waiting List",
-                    "8. View Inventory",
-                    "9. Sort Inventory",
-                    "10. View Student List",
-                    "11. Approve Transaction",
-                    "12. Logout");
-            blockPrompt("Choose an option (or 'back' to log out): ");
+            String[] labOptions = {
+                    "1. Insert Item", "2. Remove Item", "3. Search Item",
+                    "4. View Overdue Items", "5. View Transaction History",
+                    "6. View Waiting List", "7. Serve Next in Waiting List",
+                    "8. View Inventory", "9. Sort Inventory",
+                    "10. View Student List", "11. Approve Transaction", "12. Logout"
+            };
+            drawWindow("Lab Technician Menu", labOptions);
+            System.out.print(centerText("Choose an option (or 'back' to log out): "));
             int choice;
             try {
                 choice = toInt(readLine());
@@ -395,7 +450,6 @@ public class MainMenu {
             return;
         }
 
-        // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
         System.out.print(centerText("Enter item ID to restock, or type NEW to add a new item (or 'back'): "));
@@ -478,7 +532,6 @@ public class MainMenu {
             return;
         }
 
-        // Show the filtered inventory table for the selected category
         showInventoryByCategory(category);
 
         System.out.print(centerText("Enter item ID, e.g. ITM-001 or 1 (or 'back'): "));
@@ -551,14 +604,12 @@ public class MainMenu {
         boolean loggedIn = true;
 
         while (loggedIn) {
-            centerPrint("Student Menu (ID: " + studentId + ")");
-            blockPrint("1. Borrow Item",
-                    "2. Return Item",
-                    "3. View My Receipts",
-                    "4. Join Waiting List",
-                    "5. Edit Pending Receipt",
-                    "6. Logout");
-            blockPrompt("Choose an option (or 'back' to log out): ");
+            String[] studentOptions = {
+                    "1. Borrow Item", "2. Return Item", "3. View My Receipts",
+                    "4. Join Waiting List", "5. Edit Pending Receipt", "6. Logout"
+            };
+            drawWindow("Student Menu (ID: " + studentId + ")", studentOptions);
+            System.out.print(centerText("Choose an option (or 'back' to log out): "));
             int choice;
             try {
                 choice = toInt(readLine());
@@ -985,7 +1036,6 @@ public class MainMenu {
     private static void approveSelectedTransaction(Transaction t) {
         MyLinkedList<ReceiptLine> items = t.getItems();
 
-        // Check every line first, so approval is all-or-nothing rather than partially applied.
         for (int i = 0; i < items.size(); i++) {
             ReceiptLine line = items.get(i);
             if (t.getType().equals("BORROW")) {
@@ -1038,7 +1088,6 @@ public class MainMenu {
     private static void showOverdueItems() {
         MyPriorityQueue<OverdueItem> overdueQueue = new MyPriorityQueue<>();
 
-        // Example Overdue Items
         overdueQueue.insert(new OverdueItem("12345678", "Beaker 250mL", 2, 3));
         overdueQueue.insert(new OverdueItem("23456789", "Bunsen Burner", 1, 10));
         overdueQueue.insert(new OverdueItem("34567890", "Graduated Cylinder", 1, 1));
