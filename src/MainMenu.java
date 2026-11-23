@@ -160,6 +160,18 @@ public class MainMenu {
         DataStore.loadTransactions(history);
         DataStore.loadWaitingList(waitingList);
 
+        // Lab Credentials
+        MyHashTable<String, String> labTechs = new MyHashTable<>();
+        labTechs.put("19910858", "SuperSuperPass");
+        labTechs.put("12414234", "Password123");
+        labTechs.put("11485305", "qwertyuiop");
+
+        // Student Credentials
+        MyHashTable<String, String> students = new MyHashTable<>();
+        students.put("12512353", "SuperPass");
+        students.put("12510092", "WeakPassword");
+        students.put("12275934", "asdfghjkl");
+
         while (true) {
             centerPrint("LabStock: Chemistry Equipment Borrowing System");
             centerPrint("--------------------------------------------------------------------");
@@ -173,12 +185,14 @@ public class MainMenu {
             }
 
             if (roleChoice == 1) {
-                if (authenticate("19910858", "SuperSuperPass", "Lab Technician")) {
+                String loggedInId = authenticate(labTechs, "Lab Technician");
+                if (loggedInId != null) {
                     labTechnicianMenu();
                 }
             } else if (roleChoice == 2) {
-                if (authenticate("12512353", "SuperPass", "Student")) {
-                    studentMenu("12512353");
+                String loggedInId = authenticate(students, "Student");
+                if (loggedInId != null) {
+                    studentMenu(loggedInId);
                 }
             } else if (roleChoice == 3) {
                 centerPrint("Goodbye!");
@@ -189,7 +203,7 @@ public class MainMenu {
         }
     }
 
-    private static boolean authenticate(String expectedId, String expectedPass, String roleName) {
+    private static String authenticate(MyHashTable<String, String> credentials, String roleName) {
         while (true) {
             centerPrint("=== " + roleName + " Login ===");
             String id;
@@ -200,12 +214,12 @@ public class MainMenu {
                 System.out.print(centerText("Enter Password (or 'back' to return): "));
                 pass = readLine();
             } catch (BackException e) {
-                return false;
+                return null;
             }
 
-            if (id.equals(expectedId) && pass.equals(expectedPass)) {
+            if (credentials.containsKey(id) && credentials.get(id).equals(pass)) {
                 centerPrint("Login successful! Welcome, " + roleName + ".");
-                return true;
+                return id;
             } else {
                 centerPrint("Invalid ID or Password. Please try again.");
             }
