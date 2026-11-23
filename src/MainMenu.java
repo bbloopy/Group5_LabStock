@@ -1,3 +1,7 @@
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Scanner;
 
 public class MainMenu {
@@ -371,11 +375,11 @@ public class MainMenu {
 
         while (loggedIn) {
             String[] labOptions = {
-                    "1. Insert Item", "2. Remove Item", "3. Search Item",
-                    "4. View Overdue Items", "5. View Transaction History",
-                    "6. View Waiting List", "7. Serve Next in Waiting List",
-                    "8. View Inventory", "9. Sort Inventory",
-                    "10. View Student List", "11. Approve Transaction", "12. Logout"
+                    "1. Insert Item", "2. Remove Item", "3. Edit Item", "4. Search Item",
+                    "5. View Overdue Items", "6. View Transaction History",
+                    "7. View Waiting List", "8. Serve Next in Waiting List",
+                    "9. View Inventory", "10. Sort Inventory",
+                    "11. View Student List", "12. Approve Transaction", "13. Logout"
             };
             drawWindow("Lab Technician Menu", labOptions);
             System.out.print(centerText("Choose an option (or 'back' to log out): "));
@@ -397,33 +401,36 @@ public class MainMenu {
                         removeItem();
                         break;
                     case 3:
-                        searchItem();
+                        editItem();
                         break;
                     case 4:
-                        showOverdueItems();
+                        searchItem();
                         break;
                     case 5:
-                        showTransactionHistory();
+                        showOverdueItems();
                         break;
                     case 6:
-                        viewWaitingList();
+                        showTransactionHistory();
                         break;
                     case 7:
-                        serveNextInWaitingList();
+                        viewWaitingList();
                         break;
                     case 8:
-                        showInventorySummary();
+                        serveNextInWaitingList();
                         break;
                     case 9:
-                        sortInventory();
+                        showInventorySummary();
                         break;
                     case 10:
-                        showStudentList();
+                        sortInventory();
                         break;
                     case 11:
-                        approveTransaction();
+                        showStudentList();
                         break;
                     case 12:
+                        approveTransaction();
+                        break;
+                    case 13:
                         loggedIn = false;
                         centerPrint("Logging out.");
                         break;
@@ -557,6 +564,110 @@ public class MainMenu {
         inventory.removeItem(itemName, quantity);
         DataStore.saveInventory(inventory);
         centerPrint("Removed " + quantity + " from " + itemName + ".");
+    }
+
+    private static void editItem() {
+        centerPrint("Select category of the item to edit:");
+        blockPrint("1. Glassware",
+                "2. Measuring and Analytical Instruments",
+                "3. Personal Protective Equipment (PPE)",
+                "4. Chemicals");
+        blockPrompt("Choose a category (or 'back'): ");
+        int categoryChoice = toInt(readLine());
+        String category = categoryFromChoice(categoryChoice);
+        if (category == null) {
+            centerPrint("Invalid category.");
+            return;
+        }
+
+        showInventoryByCategory(category);
+
+        System.out.print(centerText("Enter item ID, e.g. ITM-001 or 1 (or 'back'): "));
+        InventoryItem item = findItemById(readLine());
+        if (item == null) {
+            centerPrint("Item ID not found in inventory.");
+            return;
+        }
+
+        boolean editing = true;
+        while (editing) {
+            centerPrint("Editing: " + item);
+            blockPrint("1. Edit Name",
+                    "2. Edit Category",
+                    "3. Edit Hazard Label",
+                    "4. Edit Quantity",
+                    "5. Done");
+            blockPrompt("Choose an option (or 'back' to finish): ");
+            int choice;
+            try {
+                choice = toInt(readLine());
+            } catch (BackException e) {
+                editing = false;
+                continue;
+            }
+
+            try {
+                switch (choice) {
+                    case 1: {
+                        System.out.print(centerText("Enter new name (or 'back'): "));
+                        String newName = readLine().trim();
+                        if (newName.equals("")) {
+                            centerPrint("Name cannot be empty.");
+                            break;
+                        }
+                        String oldName = item.getItemName();
+                        boolean renamed = inventory.renameItem(oldName, newName);
+                        if (renamed) centerPrint("Renamed '" + oldName + "' to '" + newName + "'.");
+                        else centerPrint("An item named '" + newName + "' already exists.");
+                        break;
+                    }
+                    case 2: {
+                        centerPrint("Select new category:");
+                        blockPrint("1. Glassware",
+                                "2. Measuring and Analytical Instruments",
+                                "3. Personal Protective Equipment (PPE)",
+                                "4. Chemicals");
+                        blockPrompt("Choose a category (or 'back'): ");
+                        int newCategoryChoice = toInt(readLine());
+                        String newCategory = categoryFromChoice(newCategoryChoice);
+                        if (newCategory == null) {
+                            centerPrint("Invalid category.");
+                            break;
+                        }
+                        inventory.editCategory(item.getItemName(), newCategory);
+                        centerPrint("Category updated to '" + newCategory + "'.");
+                        break;
+                    }
+                    case 3: {
+                        String newHazard = promptHazard();
+                        inventory.editHazardLabel(item.getItemName(), newHazard);
+                        centerPrint("Hazard label updated to '" + newHazard + "'.");
+                        break;
+                    }
+                    case 4: {
+                        System.out.print(centerText("Enter new quantity (or 'back'): "));
+                        int newQuantity = toInt(readLine());
+                        if (newQuantity <= 0 || newQuantity > MAX_QUANTITY) {
+                            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
+                            break;
+                        }
+                        inventory.editQuantity(item.getItemName(), newQuantity);
+                        centerPrint("Quantity updated to " + newQuantity + ".");
+                        break;
+                    }
+                    case 5:
+                        editing = false;
+                        break;
+                    default:
+                        centerPrint("Invalid option.");
+                }
+            } catch (BackException e) {
+                centerPrint("Cancelled.");
+            }
+        }
+
+        DataStore.saveInventory(inventory);
+        centerPrint("Done editing " + item.getItemName() + ".");
     }
 
     private static void searchItem() {
@@ -1086,14 +1197,76 @@ public class MainMenu {
     }
 
     private static void showOverdueItems() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        LocalDate todayDate = null;
+        while (todayDate == null) {
+            System.out.print(centerText("Enter today's date (MM/DD/YYYY, or 'back'): "));
+            String todayInput = readLineNoClear().trim();
+            try {
+                todayDate = LocalDate.parse(todayInput, fmt);
+            } catch (DateTimeParseException e) {
+                centerPrint("Invalid date. Please use MM/DD/YYYY.");
+            }
+        }
+        clearScreen();
+        centerPrint("Reference date: " + todayDate.format(fmt));
+
         MyPriorityQueue<OverdueItem> overdueQueue = new MyPriorityQueue<>();
 
-        overdueQueue.insert(new OverdueItem("12345678", "Beaker 250mL", 2, 3));
-        overdueQueue.insert(new OverdueItem("23456789", "Bunsen Burner", 1, 10));
-        overdueQueue.insert(new OverdueItem("34567890", "Graduated Cylinder", 1, 1));
-        overdueQueue.insert(new OverdueItem("45678901", "Safety Goggles", 3, 7));
+        centerPrint("Log each overdue item one at a time.");
+        while (true) {
+            System.out.print(centerText("Enter borrowed item ID (or 'done' to finish, or 'back' to cancel): "));
+            String idInput = readLineNoClear().trim();
+            if (idInput.equalsIgnoreCase("done")) {
+                break;
+            }
+            InventoryItem item = findItemById(idInput);
+            if (item == null) {
+                centerPrint("Item ID not found in inventory.");
+                continue;
+            }
 
+            System.out.print(centerText("Enter the student ID who borrowed it (or 'back'): "));
+            String studentId = readLineNoClear().trim();
+            if (studentId.equals("")) {
+                centerPrint("Student ID cannot be empty.");
+                continue;
+            }
+
+            System.out.print(centerText("Enter quantity (or 'back'): "));
+            int quantity = toInt(readLineNoClear());
+            if (quantity <= 0 || quantity > MAX_QUANTITY) {
+                centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
+                continue;
+            }
+
+            System.out.print(centerText("Enter the due date (MM/DD/YYYY, or 'back'): "));
+            String dueInput = readLineNoClear().trim();
+            LocalDate dueDate;
+            try {
+                dueDate = LocalDate.parse(dueInput, fmt);
+            } catch (DateTimeParseException e) {
+                centerPrint("Invalid date. Please use MM/DD/YYYY.");
+                continue;
+            }
+
+            long daysOverdue = ChronoUnit.DAYS.between(dueDate, todayDate);
+            if (daysOverdue <= 0) {
+                centerPrint("Not overdue yet (due " + dueDate.format(fmt) + "). Not added.");
+                continue;
+            }
+
+            overdueQueue.insert(new OverdueItem(studentId, item.getItemName(), quantity, (int) daysOverdue));
+            centerPrint("Added: " + item.getItemName() + ", " + daysOverdue + " day(s) overdue.");
+        }
+
+        clearScreen();
         centerPrint("Overdue Items (most urgent first):");
+        if (overdueQueue.isEmpty()) {
+            centerPrint("No overdue items entered.");
+            return;
+        }
         while (!overdueQueue.isEmpty()) {
             centerPrint(overdueQueue.extractMin().toString());
         }

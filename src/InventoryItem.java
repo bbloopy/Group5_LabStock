@@ -46,6 +46,22 @@ public class InventoryItem {
         this.quantity += amount;
     }
 
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setHazardLabel(String hazardLabel) {
+        this.hazardLabel = hazardLabel;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

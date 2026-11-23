@@ -93,6 +93,49 @@ public class InventoryManager {
         return true;
     }
 
+    public boolean renameItem(String oldName, String newName) {
+        Integer index = nameIndex.get(oldName);
+        if (index == null) {
+            return false;
+        }
+        Integer collidingIndex = nameIndex.get(newName);
+        if (collidingIndex != null && !collidingIndex.equals(index)) {
+            return false;
+        }
+        InventoryItem item = items[index];
+        nameIndex.remove(oldName);
+        item.setItemName(newName);
+        nameIndex.put(newName, index);
+        return true;
+    }
+
+    public boolean editCategory(String itemName, String newCategory) {
+        InventoryItem item = searchItem(itemName);
+        if (item == null) {
+            return false;
+        }
+        item.setCategory(newCategory);
+        return true;
+    }
+
+    public boolean editHazardLabel(String itemName, String newHazardLabel) {
+        InventoryItem item = searchItem(itemName);
+        if (item == null) {
+            return false;
+        }
+        item.setHazardLabel(newHazardLabel);
+        return true;
+    }
+
+    public boolean editQuantity(String itemName, int newQuantity) {
+        InventoryItem item = searchItem(itemName);
+        if (item == null) {
+            return false;
+        }
+        item.setQuantity(newQuantity);
+        return true;
+    }
+
     public InventoryItem searchItem(String itemName) {
         Integer index = nameIndex.get(itemName);
         if (index == null) {
