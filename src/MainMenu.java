@@ -525,29 +525,6 @@ public class MainMenu {
         }
     }
 
-    /** Counts pending transactions and waiting list entries that still refer to this item name. */
-    private static int countOpenRequests(String itemName) {
-        int count = 0;
-        MyLinkedList<Transaction> pending = history.getPending();
-        for (int i = 0; i < pending.size(); i++) {
-            if (findLine(pending.get(i).getItems(), itemName) != -1) {
-                count++;
-            }
-        }
-        for (int i = 0; i < waitingList.size(); i++) {
-            if (waitingList.get(i).getItemName().equals(itemName)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private static boolean confirm(String question) {
-        System.out.print(centerText(question + " (Y/N, or 'back'): "));
-        String answer = readLine().trim();
-        return answer.equalsIgnoreCase("y") || answer.equalsIgnoreCase("yes");
-    }
-
     private static void removeItem() {
         centerPrint("Select category of the item to remove:");
         blockPrint("1. Glassware",
@@ -570,64 +547,23 @@ public class MainMenu {
             centerPrint("Item ID not found in inventory.");
             return;
         }
-        if (!item.getCategory().equals(category)) {
-            centerPrint("That item is not in the " + category + " category.");
+        String itemName = item.getItemName();
+
+        System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + ", or 'back'): "));
+        int quantity = toInt(readLine());
+        if (quantity <= 0 || quantity > MAX_QUANTITY) {
+            centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
             return;
         }
-        String itemName = item.getItemName();
 
-        centerPrint("Selected: " + item);
-        blockPrint("1. Remove some quantity",
-                "2. Delete item from inventory");
-        blockPrompt("Choose an option (or 'back'): ");
-        int choice = toInt(readLine());
+        if (quantity > item.getQuantity()) {
+            centerPrint("Cannot remove more than the current stock (" + item.getQuantity() + ").");
+            return;
+        }
 
-        if (choice == 1) {
-            System.out.print(centerText("Enter quantity to remove (current stock: " + item.getQuantity() + ", or 'back'): "));
-            int quantity = toInt(readLine());
-            if (quantity <= 0 || quantity > MAX_QUANTITY) {
-                centerPrint("Invalid quantity. Enter a whole number from 1 to 9999.");
-                return;
-            }
-            if (quantity > item.getQuantity()) {
-                centerPrint("Cannot remove more than the current stock (" + item.getQuantity() + ").");
-                return;
-            }
-            if (quantity == item.getQuantity()) {
-                centerPrint("Removing the full stock deletes " + itemName + " from the inventory.");
-                if (!deleteItemIfAllowed(item)) {
-                    return;
-                }
-                return;
-            }
-            inventory.removeItem(itemName, quantity);
-            DataStore.saveInventory(inventory);
-            centerPrint("Removed " + quantity + " from " + itemName + ". Remaining stock: " + item.getQuantity());
-        } else if (choice == 2) {
-            deleteItemIfAllowed(item);
-        } else {
-            centerPrint("Invalid option.");
-        }
-    }
-
-    /** Confirms and deletes the item, unless pending requests still depend on it. */
-    private static boolean deleteItemIfAllowed(InventoryItem item) {
-        String itemName = item.getItemName();
-        int open = countOpenRequests(itemName);
-        if (open > 0) {
-            centerPrint("Cannot delete " + itemName + ": " + open
-                    + " pending transaction(s)/waiting list entr(ies) still refer to it.");
-            centerPrint("Approve, reject, or serve those first.");
-            return false;
-        }
-        if (!confirm("Delete " + item.getFormattedId() + " " + itemName + " (" + item.getQuantity() + " in stock)?")) {
-            centerPrint("Deletion cancelled.");
-            return false;
-        }
-        inventory.removeItem(itemName, item.getQuantity());
+        inventory.removeItem(itemName, quantity);
         DataStore.saveInventory(inventory);
-        centerPrint("Deleted " + itemName + " from the inventory.");
-        return true;
+        centerPrint("Removed " + quantity + " from " + itemName + ".");
     }
 
     private static void editItem() {
