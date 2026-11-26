@@ -253,7 +253,10 @@ public class MainMenu {
     }
 
     private static String authenticate(MyHashTable<String, String> credentials, String roleName) {
-        while (true) {
+        final int MAX_ATTEMPTS = 5;
+        int attempts = 0;
+
+        while (attempts < MAX_ATTEMPTS) {
             String[] loginInfo = {
                     "Authorized personnel only.",
                     "Type 'back' at any prompt to cancel."
@@ -285,10 +288,17 @@ public class MainMenu {
                 centerPrint("Login successful! Welcome, " + roleName + ".");
                 return id;
             } else {
-                centerPrint("Invalid ID or Password. Please try again.");
+                attempts++;
+                int remaining = MAX_ATTEMPTS - attempts;
+                if (remaining == 0) {
+                    centerPrint("Too many failed login attempts. The program will now close.");
+                    System.exit(0);
+                }
+                centerPrint("Invalid ID or Password. Attempts remaining: " + remaining);
                 System.out.println();
             }
         }
+        return null;
     }
 
     private static String truncate(String str, int maxLen) {
