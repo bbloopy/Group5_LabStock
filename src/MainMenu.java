@@ -984,6 +984,7 @@ public class MainMenu {
             try {
                 switch (choice) {
                     case 1: {
+                        showInventorySummary();
                         System.out.print(centerText("Enter item ID (or 'back'): "));
                         InventoryItem newItem = findItemById(readLineNoClear());
                         if (newItem == null) {
