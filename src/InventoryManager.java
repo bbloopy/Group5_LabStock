@@ -209,19 +209,17 @@ public class InventoryManager {
     private void removeAt(int index) {
         String removedName = items[index].getItemName();
         int removedId = items[index].getItemId();
-        int lastIndex = size - 1;
 
-        if (index != lastIndex) {
-            InventoryItem lastItem = items[lastIndex];
-            items[index] = lastItem;
-            nameIndex.put(lastItem.getItemName(), index);
-            idIndex.put(lastItem.getItemId(), index);
+        // Shift items left (instead of swapping in the last item) so the current sort order is kept.
+        for (int i = index; i < size - 1; i++) {
+            items[i] = items[i + 1];
         }
-
-        items[lastIndex] = null;
+        items[size - 1] = null;
         size--;
+
         nameIndex.remove(removedName);
         idIndex.remove(removedId);
+        rebuildIndex();
     }
 
     private void resize() {
